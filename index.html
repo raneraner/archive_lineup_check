@@ -129,6 +129,11 @@
   .btn-primary:hover:not(:disabled){filter:brightness(1.08);}
   .btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text);}
   .btn-ghost:hover{border-color:var(--muted);}
+  .btn-small{font-size:12px;padding:7px 12px;font-weight:500;width:100%;}
+  .count-warn{
+    background:var(--amber-dim);border:1px solid rgba(240,166,60,.35);color:var(--amber);
+    padding:10px 14px;border-radius:8px;font-size:12.5px;line-height:1.6;margin-top:12px;
+  }
 
   .actions{display:flex;gap:10px;margin-top:18px;align-items:center;}
 
@@ -240,6 +245,17 @@
       </label>
     </div>
 
+    <div class="upload-row" style="margin-top:10px;">
+      <div>
+        <button class="btn-ghost btn-small" id="toggleLineupPaste" type="button">יש לי כבר רשימת ID-ים בטקסט (בלי OCR)</button>
+        <textarea id="pasteLineup" rows="6" placeholder="שורה לכל ID..." hidden style="margin-top:8px;"></textarea>
+      </div>
+      <div>
+        <button class="btn-ghost btn-small" id="toggleArchivePaste" type="button">יש לי כבר רשימת קבצים בטקסט (בלי OCR)</button>
+        <textarea id="pasteArchive" rows="6" placeholder="שורה לכל שם קובץ..." hidden style="margin-top:8px;"></textarea>
+      </div>
+    </div>
+
     <div class="actions">
       <button class="btn-primary" id="btnExtract" disabled>זיהוי אוטומטי (OCR)</button>
       <span class="status-text" id="uploadStatus"></span>
@@ -253,6 +269,7 @@
   <div class="step" id="step2" hidden>
     <div class="step-head"><div class="step-num">2</div><div class="step-title">בדיקה ועריכה לפני השוואה</div></div>
     <div class="step-desc">זיהוי אוטומטי (OCR) עלול לטעות בשמות דומים — חשוב לעבור על הרשימות לפני שממשיכים.</div>
+    <div class="count-warn" id="countWarnBanner" hidden></div>
 
     <div class="field">
       <label class="field-label">תאריך נבדק</label>
@@ -366,8 +383,23 @@ setupDropzone('dzArchive','fileArchive',true, files=>{
 });
 
 function updateExtractButton(){
-  $('btnExtract').disabled = !(lineupFile && archiveFiles.length>0);
+  const lineupReady = lineupFile || $('pasteLineup').value.trim().length>0;
+  const archiveReady = archiveFiles.length>0 || $('pasteArchive').value.trim().length>0;
+  $('btnExtract').disabled = !(lineupReady && archiveReady);
+  $('btnExtract').textContent = (lineupFile || archiveFiles.length>0) ? 'זיהוי אוטומטי (OCR) והשלמה' : 'המשך';
 }
+
+function setupPasteToggle(btnId, taId, dzId){
+  $(btnId).addEventListener('click', ()=>{
+    const ta = $(taId);
+    ta.hidden = !ta.hidden;
+    $(btnId).textContent = ta.hidden ? btnId==='toggleLineupPaste' ? 'יש לי כבר רשימת ID-ים בטקסט (בלי OCR)' : 'יש לי כבר רשימת קבצים בטקסט (בלי OCR)' : 'הסתר / חזרה להעלאת קובץ';
+    updateExtractButton();
+  });
+  $(taId).addEventListener('input', updateExtractButton);
+}
+setupPasteToggle('toggleLineupPaste','pasteLineup','dzLineup');
+setupPasteToggle('toggleArchivePaste','pasteArchive','dzArchive');
 
 // ---------- Date parsing from filename ----------
 function guessDateFromFilename(name){
@@ -411,91 +443,126 @@ async function runExtraction(){
   $('ocrError').hidden = true;
   $('progressArea').innerHTML = '';
   $('progressArea').hidden = false;
-  $('uploadStatus').textContent = 'מתחיל זיהוי...';
+  $('uploadStatus').textContent = 'מתחיל עיבוד...';
+
+  const lineupPasted = $('pasteLineup').value.trim();
+  const archivePasted = $('pasteArchive').value.trim();
 
   try{
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-    // 1) Parse date from filename
-    const dateGuess = guessDateFromFilename(lineupFile.name);
+    // date guess only relevant if we have the actual PDF file
+    const dateGuess = lineupFile ? guessDateFromFilename(lineupFile.name) : null;
 
-    // 2) Render PDF pages to canvases
-    addProgressLine('pdf','טוען PDF');
-    const buf = await lineupFile.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument({data: buf}).promise;
-    setProgress('pdf', 100);
+    let lineupIds = [];
+    let archiveIds = [];
 
-    const worker = await Tesseract.createWorker('eng', 1, {
-      logger: m => {
-        if(m.status === 'recognizing text'){
-          const el = document.getElementById('current-ocr-target');
-          if(el) setProgress(el.dataset.id, m.progress*100);
+    // Only spin up the OCR worker if at least one side actually needs it
+    let worker = null;
+    if(lineupFile || archiveFiles.length>0){
+      worker = await Tesseract.createWorker('eng', 1, {
+        logger: m => {
+          if(m.status === 'recognizing text'){
+            const el = document.getElementById('current-ocr-target');
+            if(el) setProgress(el.dataset.id, m.progress*100);
+          }
         }
+      });
+      // Constrain recognition to the character set IDs actually use, and treat
+      // each region as a uniform block of text rather than fully-automatic
+      // layout analysis (which tends to fail on dense RTL tables).
+      await worker.setParameters({
+        tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_.,:',
+        tessedit_pageseg_mode: '6'
+      });
+    }
+
+    if(lineupFile){
+      const buf = await lineupFile.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({data: buf}).promise;
+      let lineupRawText = '';
+      for(let p=1; p<=pdf.numPages; p++){
+        const pid = 'lineup-p'+p;
+        addProgressLine(pid, `ליינאפ · עמוד ${p} מתוך ${pdf.numPages}`);
+        const page = await pdf.getPage(p);
+        const viewport = page.getViewport({scale:3.5});
+        const canvas = document.createElement('canvas');
+        canvas.width = viewport.width; canvas.height = viewport.height;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#fff'; ctx.fillRect(0,0,canvas.width,canvas.height);
+        await page.render({canvasContext:ctx, viewport}).promise;
+
+        const marker = document.createElement('span');
+        marker.id = 'current-ocr-target'; marker.dataset.id = pid;
+        document.body.appendChild(marker);
+        const { data:{text} } = await worker.recognize(canvas);
+        marker.remove();
+        setProgress(pid,100);
+        lineupRawText += '\n' + text;
       }
-    });
-
-    let lineupRawText = '';
-    for(let p=1; p<=pdf.numPages; p++){
-      const pid = 'lineup-p'+p;
-      addProgressLine(pid, `ליינאפ · עמוד ${p} מתוך ${pdf.numPages}`);
-      const page = await pdf.getPage(p);
-      const viewport = page.getViewport({scale:2.5});
-      const canvas = document.createElement('canvas');
-      canvas.width = viewport.width; canvas.height = viewport.height;
-      const ctx = canvas.getContext('2d');
-      await page.render({canvasContext:ctx, viewport}).promise;
-
-      const marker = document.createElement('span');
-      marker.id = 'current-ocr-target'; marker.dataset.id = pid;
-      document.body.appendChild(marker);
-      const { data:{text} } = await worker.recognize(canvas);
-      marker.remove();
-      setProgress(pid,100);
-      lineupRawText += '\n' + text;
+      lineupIds = extractIdsFromText(lineupRawText);
+    } else {
+      lineupIds = lineupPasted.split('\n').map(s=>s.trim()).filter(Boolean)
+        .map(m=>m.replace(/^(VTR|VO|SYNC)[:_]*/i,''));
     }
 
-    let archiveRawText = '';
-    for(let i=0;i<archiveFiles.length;i++){
-      const f = archiveFiles[i];
-      const pid = 'arc-'+i;
-      addProgressLine(pid, `תיקייה · ${f.name}`);
-      const imgBitmap = await createImageBitmap(f);
-      const canvas = document.createElement('canvas');
-      const scale = 2;
-      canvas.width = imgBitmap.width*scale; canvas.height = imgBitmap.height*scale;
-      const ctx = canvas.getContext('2d');
-      ctx.imageSmoothingEnabled = true;
-      ctx.drawImage(imgBitmap,0,0,canvas.width,canvas.height);
+    if(archiveFiles.length>0){
+      let archiveRawText = '';
+      for(let i=0;i<archiveFiles.length;i++){
+        const f = archiveFiles[i];
+        const pid = 'arc-'+i;
+        addProgressLine(pid, `תיקייה · ${f.name}`);
+        const imgBitmap = await createImageBitmap(f);
+        const canvas = document.createElement('canvas');
+        const scale = 3;
+        canvas.width = imgBitmap.width*scale; canvas.height = imgBitmap.height*scale;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#fff'; ctx.fillRect(0,0,canvas.width,canvas.height);
+        ctx.imageSmoothingEnabled = true;
+        ctx.drawImage(imgBitmap,0,0,canvas.width,canvas.height);
 
-      const marker = document.createElement('span');
-      marker.id = 'current-ocr-target'; marker.dataset.id = pid;
-      document.body.appendChild(marker);
-      const { data:{text} } = await worker.recognize(canvas);
-      marker.remove();
-      setProgress(pid,100);
-      archiveRawText += '\n' + text;
+        const marker = document.createElement('span');
+        marker.id = 'current-ocr-target'; marker.dataset.id = pid;
+        document.body.appendChild(marker);
+        const { data:{text} } = await worker.recognize(canvas);
+        marker.remove();
+        setProgress(pid,100);
+        archiveRawText += '\n' + text;
+      }
+      archiveIds = extractIdsFromText(archiveRawText);
+    } else {
+      archiveIds = archivePasted.split('\n').map(s=>s.trim()).filter(Boolean);
     }
 
-    await worker.terminate();
-
-    // 3) Extract candidate IDs
-    const lineupIds = extractIdsFromText(lineupRawText);
-    const archiveIds = extractIdsFromText(archiveRawText);
+    if(worker) await worker.terminate();
 
     $('lineupText').value = lineupIds.join('\n');
     $('archiveText').value = archiveIds.join('\n');
     $('checkedDate').value = dateGuess ? dateGuess.display : '';
     $('checkedDate').dataset.ddmmyy = dateGuess ? dateGuess.ddmmyy : '';
 
+    // Sanity banner — OCR on this kind of dense table sometimes extracts
+    // almost nothing without failing loudly. Surface that clearly instead
+    // of silently producing a near-empty (and misleading) comparison.
+    const warnBanner = $('countWarnBanner');
+    const lowLineup = lineupFile && lineupIds.length < 15;
+    const lowArchive = archiveFiles.length>0 && archiveIds.length < 15;
+    if(lowLineup || lowArchive){
+      warnBanner.hidden = false;
+      warnBanner.innerHTML = `⚠ זוהו רק ${lineupIds.length} פריטים בליינאף ו-${archiveIds.length} בתיקייה — זה נמוך משמעותית ממה שמצופה במהדורה טיפוסית (בדרך כלל 50+ ו-90+ בהתאמה). ` +
+        `כנראה שה-OCR לא הצליח לקרוא את הטבלה כמו שצריך. מומלץ לא להסתמך על התוצאה הזו, ולנסות: העלאת התמונות בנפרד (עמוד/צילום אחד בכל פעם), רזולוציה גבוהה יותר, או להדביק את הרשימה כטקסט (למשל ישירות מתוך שיחה עם קלוד).`;
+    } else {
+      warnBanner.hidden = true;
+    }
+
     $('step2').hidden = false;
     $('step2').scrollIntoView({behavior:'smooth'});
-    $('uploadStatus').textContent = 'הזיהוי הושלם — יש לבדוק את הרשימות למטה.';
+    $('uploadStatus').textContent = 'העיבוד הושלם — יש לבדוק את הרשימות למטה.';
 
   }catch(err){
     console.error(err);
     $('ocrError').hidden = false;
-    $('ocrError').textContent = 'הזיהוי האוטומטי נכשל (' + (err.message||err) + '). אפשר להדביק את הרשימות ידנית: ' +
-      'לחצו "חזרה לעריכה" למטה אחרי שתפתחו קודם שלב 2 ידנית, או רעננו ונסו שוב.';
+    $('ocrError').textContent = 'העיבוד נכשל (' + (err.message||err) + '). אפשר להדביק את הרשימות ידנית בתיבות "יש לי כבר רשימה בטקסט" ולנסות שוב, או לערוך ישירות בשלב 2.';
     $('step2').hidden = false;
   }finally{
     $('btnExtract').disabled = false;
