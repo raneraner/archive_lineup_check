@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>בדיקת ליינאפ מול ארכיון</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.0.4/tesseract.min.js"></script>
+<style>
+  :root{
+    --bg:#11141a;
+    --panel:#181d25;
+    --panel2:#1e2530;
+    --border:#2a323e;
+    --text:#e9e6dd;
+    --muted:#8b93a3;
+    --amber:#f0a63c;
+    --amber-dim:#4a3a1f;
+    --red:#e2483d;
+    --red-dim:#3a1f1e;
+    --green:#4fb377;
+    --green-dim:#1c352a;
+    --blue-gray:#8592a8;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Heebo', sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--sans);
+    padding:32px 20px 80px;
+    min-height:100vh;
+  }
+  .wrap{max-width:880px;margin:0 auto;}
+
+  /* Header */
+  .eyebrow{
+    font-family:var(--mono);
+    font-size:12px;
+    letter-spacing:.14em;
+    color:var(--amber);
+    text-transform:uppercase;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin-bottom:10px;
+  }
+  .lamp{
+    width:9px;height:9px;border-radius:50%;
+    background:var(--muted);
+    box-shadow:0 0 0 3px rgba(139,147,163,.15);
+    transition:all .3s;
+  }
+  .lamp.on-red{background:var(--red);box-shadow:0 0 10px 2px rgba(226,72,61,.6),0 0 0 3px rgba(226,72,61,.15);}
+  .lamp.on-green{background:var(--green);box-shadow:0 0 10px 2px rgba(79,179,119,.6),0 0 0 3px rgba(79,179,119,.15);}
+  h1{
+    font-size:28px;
+    font-weight:900;
+    margin:0 0 6px;
+    letter-spacing:-.01em;
+  }
+  .subtitle{color:var(--muted);font-size:14.5px;margin:0 0 36px;line-height:1.6;max-width:60ch;}
+
+  /* Step sections */
+  .step{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:22px 24px;
+    margin-bottom:18px;
+  }
+  .step[hidden]{display:none;}
+  .step-head{
+    display:flex;align-items:center;gap:12px;margin-bottom:16px;
+  }
+  .step-num{
+    font-family:var(--mono);
+    font-size:12px;
+    color:var(--bg);
+    background:var(--amber);
+    width:22px;height:22px;
+    border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-weight:700;
+    flex-shrink:0;
+  }
+  .step-title{font-size:15.5px;font-weight:700;}
+  .step-desc{color:var(--muted);font-size:13px;margin:-8px 0 16px 34px;line-height:1.6;}
+
+  /* Upload zones */
+  .upload-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  @media (max-width:640px){.upload-row{grid-template-columns:1fr;}}
+  .dropzone{
+    border:1.5px dashed var(--border);
+    border-radius:10px;
+    padding:22px 16px;
+    text-align:center;
+    cursor:pointer;
+    transition:border-color .2s, background .2s;
+    background:var(--panel2);
+  }
+  .dropzone:hover, .dropzone.drag{border-color:var(--amber);background:#242b36;}
+  .dropzone input{display:none;}
+  .dz-label{font-size:13.5px;font-weight:500;margin-bottom:4px;}
+  .dz-hint{font-size:11.5px;color:var(--muted);}
+  .dz-files{
+    margin-top:10px;font-family:var(--mono);font-size:11px;color:var(--amber);
+    text-align:right;line-height:1.7;word-break:break-all;
+  }
+
+  button{
+    font-family:var(--sans);
+    font-weight:700;
+    font-size:14px;
+    border:none;
+    border-radius:8px;
+    padding:11px 22px;
+    cursor:pointer;
+    transition:filter .15s, transform .1s;
+  }
+  button:active{transform:scale(.98);}
+  button:disabled{opacity:.4;cursor:not-allowed;}
+  .btn-primary{background:var(--amber);color:#1a1305;}
+  .btn-primary:hover:not(:disabled){filter:brightness(1.08);}
+  .btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text);}
+  .btn-ghost:hover{border-color:var(--muted);}
+
+  .actions{display:flex;gap:10px;margin-top:18px;align-items:center;}
+
+  /* Progress */
+  .progress-area{margin-top:16px;}
+  .progress-line{
+    display:flex;align-items:center;gap:10px;
+    font-family:var(--mono);font-size:12px;color:var(--muted);
+    margin-bottom:8px;
+  }
+  .bar{flex:1;height:5px;background:var(--panel2);border-radius:3px;overflow:hidden;}
+  .bar-fill{height:100%;background:var(--amber);width:0%;transition:width .2s;}
+
+  /* Editable fields */
+  label.field-label{
+    display:block;font-size:12.5px;font-weight:700;margin-bottom:6px;color:var(--text);
+  }
+  .field-hint{font-size:11.5px;color:var(--muted);margin:-3px 0 8px;line-height:1.6;}
+  input[type=text]{
+    width:100%;background:var(--panel2);border:1px solid var(--border);color:var(--text);
+    font-family:var(--mono);font-size:13.5px;padding:10px 12px;border-radius:7px;
+  }
+  textarea{
+    width:100%;background:var(--panel2);border:1px solid var(--border);color:var(--text);
+    font-family:var(--mono);font-size:12.5px;line-height:1.7;padding:12px;border-radius:7px;
+    resize:vertical;direction:ltr;text-align:left;
+  }
+  .field{margin-bottom:18px;}
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  @media (max-width:640px){.two-col{grid-template-columns:1fr;}}
+
+  /* Results */
+  .summary{
+    display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px;
+  }
+  .summary-chip{
+    font-family:var(--mono);font-size:12px;color:var(--muted);
+    background:var(--panel2);border:1px solid var(--border);
+    padding:7px 12px;border-radius:20px;
+  }
+  .summary-chip b{color:var(--text);}
+
+  .result-block{margin-bottom:20px;}
+  .result-head{
+    display:flex;align-items:center;gap:10px;margin-bottom:10px;
+  }
+  .result-title{font-size:14.5px;font-weight:700;}
+  .count-badge{
+    font-family:var(--mono);font-size:11.5px;font-weight:700;
+    padding:2px 9px;border-radius:20px;
+  }
+  .rb-red .count-badge{background:var(--red-dim);color:var(--red);}
+  .rb-amber .count-badge{background:var(--amber-dim);color:var(--amber);}
+  .rb-gray .count-badge{background:var(--panel2);color:var(--blue-gray);}
+
+  .id-list{border:1px solid var(--border);border-radius:9px;overflow:hidden;}
+  .id-row{
+    font-family:var(--mono);font-size:12.5px;
+    padding:10px 14px;
+    border-bottom:1px solid var(--border);
+    display:flex;justify-content:space-between;align-items:center;gap:10px;
+    direction:ltr;text-align:left;
+  }
+  .id-row:last-child{border-bottom:none;}
+  .rb-red .id-row{background:linear-gradient(90deg, rgba(226,72,61,.08), transparent);}
+  .rb-amber .id-row{background:linear-gradient(90deg, rgba(240,166,60,.06), transparent);}
+  .rb-gray .id-row{background:linear-gradient(90deg, rgba(133,146,168,.06), transparent);}
+  .warn{font-size:11px;color:var(--amber);font-family:var(--sans);flex-shrink:0;}
+  .empty-note{
+    font-family:var(--sans);color:var(--green);font-size:13px;
+    padding:14px;text-align:center;background:var(--green-dim);border-radius:9px;
+  }
+
+  details{margin-top:6px;}
+  summary{cursor:pointer;color:var(--muted);font-size:12px;font-family:var(--mono);}
+  .ignored-list{margin-top:8px;font-family:var(--mono);font-size:11.5px;color:var(--muted);direction:ltr;text-align:left;line-height:2;}
+
+  .status-text{font-size:12.5px;color:var(--muted);}
+  .error-box{
+    background:var(--red-dim);border:1px solid rgba(226,72,61,.3);color:#f3b3ae;
+    padding:12px 14px;border-radius:8px;font-size:12.5px;line-height:1.6;margin-top:12px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="eyebrow"><span class="lamp" id="lamp"></span> בקרת ארכיון · כאן חדשות</div>
+  <h1>בדיקת ליינאפ מול ארכיון</h1>
+  <p class="subtitle">מעלים את קובץ הליינאפ ואת צילומי המסך של תיקיית הארכיון, בודקים ומתקנים את הזיהוי האוטומטי, ומקבלים את שתי רשימות החוסרים.</p>
+
+  <!-- STEP 1: Upload -->
+  <div class="step" id="step1">
+    <div class="step-head"><div class="step-num">1</div><div class="step-title">העלאת קבצים</div></div>
+    <div class="step-desc">קובץ PDF אחד של הליינאפ, וצילום מסך אחד או יותר של תוכן תיקיית הארכיון.</div>
+
+    <div class="upload-row">
+      <label class="dropzone" id="dzLineup">
+        <input type="file" id="fileLineup" accept="application/pdf">
+        <div class="dz-label">📋 קובץ הליינאפ (PDF)</div>
+        <div class="dz-hint">גררו לכאן או לחצו לבחירה</div>
+        <div class="dz-files" id="filesLineupList"></div>
+      </label>
+      <label class="dropzone" id="dzArchive">
+        <input type="file" id="fileArchive" accept="image/*" multiple>
+        <div class="dz-label">🗂️ צילומי מסך של הארכיון</div>
+        <div class="dz-hint">אפשר לבחור כמה תמונות יחד</div>
+        <div class="dz-files" id="filesArchiveList"></div>
+      </label>
+    </div>
+
+    <div class="actions">
+      <button class="btn-primary" id="btnExtract" disabled>זיהוי אוטומטי (OCR)</button>
+      <span class="status-text" id="uploadStatus"></span>
+    </div>
+
+    <div class="progress-area" id="progressArea" hidden></div>
+    <div class="error-box" id="ocrError" hidden></div>
+  </div>
+
+  <!-- STEP 2: Review -->
+  <div class="step" id="step2" hidden>
+    <div class="step-head"><div class="step-num">2</div><div class="step-title">בדיקה ועריכה לפני השוואה</div></div>
+    <div class="step-desc">זיהוי אוטומטי (OCR) עלול לטעות בשמות דומים — חשוב לעבור על הרשימות לפני שממשיכים.</div>
+
+    <div class="field">
+      <label class="field-label">תאריך נבדק</label>
+      <input type="text" id="checkedDate" placeholder="DD/MM/YYYY">
+      <div class="field-hint">זוהה אוטומטית משם קובץ הליינאפ. אפשר לתקן ידנית אם צריך.</div>
+    </div>
+
+    <div class="two-col">
+      <div class="field">
+        <label class="field-label">ID-ים שזוהו בליינאפ</label>
+        <div class="field-hint">שורה לכל פריט. אפשר למחוק, לתקן או להוסיף שורות.</div>
+        <textarea id="lineupText" rows="14"></textarea>
+      </div>
+      <div class="field">
+        <label class="field-label">שמות קבצים שזוהו בתיקייה</label>
+        <div class="field-hint">שורה לכל קובץ (מספיק החלק שלפני הנקודה הראשונה).</div>
+        <textarea id="archiveText" rows="14"></textarea>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="field-label">רשימת התעלמות קבועה</label>
+      <div class="field-hint">כל ID שמכיל אחד מהערכים האלה (לא תלוי רישיות) יוחרג מהבדיקה.</div>
+      <textarea id="ignoreText" rows="4">kotarot
+prpr
+hin
+promo
+div_
+20_vtr_exit_KTC
+20_vtr_back_CTK
+20_vtr_wiper_KTK</textarea>
+    </div>
+
+    <div class="actions">
+      <button class="btn-primary" id="btnCompare">השוואה</button>
+      <button class="btn-ghost" id="btnBackToUpload">חזרה להעלאה</button>
+    </div>
+  </div>
+
+  <!-- STEP 3: Results -->
+  <div class="step" id="step3" hidden>
+    <div class="step-head"><div class="step-num">3</div><div class="step-title">תוצאות</div></div>
+
+    <div class="summary" id="summaryChips"></div>
+
+    <div class="result-block rb-red">
+      <div class="result-head">
+        <div class="result-title">חוסרים בתיקייה — תאריך תואם</div>
+        <div class="count-badge" id="countRed">0</div>
+      </div>
+      <div id="listRed"></div>
+    </div>
+
+    <div class="result-block rb-amber">
+      <div class="result-head">
+        <div class="result-title">חוסרים עם תאריך אחר (כנראה כבר מאורכבים)</div>
+        <div class="count-badge" id="countAmber">0</div>
+      </div>
+      <div id="listAmber"></div>
+    </div>
+
+    <div class="result-block rb-gray" id="grayBlock" hidden>
+      <div class="result-head">
+        <div class="result-title">לא ניתן לקבוע תאריך — נדרשת בדיקה ידנית</div>
+        <div class="count-badge" id="countGray">0</div>
+      </div>
+      <div id="listGray"></div>
+    </div>
+
+    <details>
+      <summary id="ignoredSummary">פריטים שהוחרגו (רשימת ההתעלמות)</summary>
+      <div class="ignored-list" id="ignoredList"></div>
+    </details>
+
+    <div class="actions" style="margin-top:22px;">
+      <button class="btn-ghost" id="btnEditAgain">חזרה לעריכה</button>
+      <button class="btn-ghost" id="btnRestart">בדיקה חדשה</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+let lineupFile = null;
+let archiveFiles = [];
+
+const $ = id => document.getElementById(id);
+
+// ---------- Upload handling ----------
+function setupDropzone(dzId, inputId, isMultiple, onChange){
+  const dz = $(dzId), input = $(inputId);
+  dz.addEventListener('dragover', e=>{e.preventDefault(); dz.classList.add('drag');});
+  dz.addEventListener('dragleave', ()=> dz.classList.remove('drag'));
+  dz.addEventListener('drop', e=>{
+    e.preventDefault(); dz.classList.remove('drag');
+    input.files = e.dataTransfer.files;
+    onChange(e.dataTransfer.files);
+  });
+  input.addEventListener('change', ()=> onChange(input.files));
+}
+
+setupDropzone('dzLineup','fileLineup',false, files=>{
+  lineupFile = files[0] || null;
+  $('filesLineupList').textContent = lineupFile ? lineupFile.name : '';
+  updateExtractButton();
+});
+setupDropzone('dzArchive','fileArchive',true, files=>{
+  archiveFiles = Array.from(files);
+  $('filesArchiveList').textContent = archiveFiles.map(f=>f.name).join('\n');
+  updateExtractButton();
+});
+
+function updateExtractButton(){
+  $('btnExtract').disabled = !(lineupFile && archiveFiles.length>0);
+}
+
+// ---------- Date parsing from filename ----------
+function guessDateFromFilename(name){
+  // patterns like 25_8_2025 or 25_08_2025
+  const m = name.match(/(\d{1,2})_(\d{1,2})_(\d{4})/);
+  if(!m) return null;
+  const dd = m[1].padStart(2,'0'), mm = m[2].padStart(2,'0'), yyyy = m[3];
+  return { display: `${dd}/${mm}/${yyyy}`, ddmmyy: dd+mm+yyyy.slice(2) };
+}
+
+// ---------- Progress UI ----------
+function addProgressLine(id, label){
+  const area = $('progressArea');
+  area.hidden = false;
+  const line = document.createElement('div');
+  line.className = 'progress-line';
+  line.id = 'prog-'+id;
+  line.innerHTML = `<span>${label}</span><div class="bar"><div class="bar-fill" id="bar-${id}"></div></div><span id="pct-${id}">0%</span>`;
+  area.appendChild(line);
+}
+function setProgress(id, pct){
+  const fill = $('bar-'+id), pctEl = $('pct-'+id);
+  if(fill) fill.style.width = pct+'%';
+  if(pctEl) pctEl.textContent = Math.round(pct)+'%';
+}
+
+// ---------- ID extraction regexes ----------
+const ID_TOKEN_RE = /\b[A-Za-z][A-Za-z0-9]*(?:_[A-Za-z0-9]+)+_\d{6}[A-Za-z0-9]*\b/g;
+
+function extractIdsFromText(text){
+  const matches = text.match(ID_TOKEN_RE) || [];
+  // strip common prefixes accidentally glued via OCR
+  return matches.map(m=>m.replace(/^(VTR|VO|SYNC)[:_]*/i,''));
+}
+
+// ---------- Main OCR flow ----------
+$('btnExtract').addEventListener('click', runExtraction);
+
+async function runExtraction(){
+  $('btnExtract').disabled = true;
+  $('ocrError').hidden = true;
+  $('progressArea').innerHTML = '';
+  $('progressArea').hidden = false;
+  $('uploadStatus').textContent = 'מתחיל זיהוי...';
+
+  try{
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+    // 1) Parse date from filename
+    const dateGuess = guessDateFromFilename(lineupFile.name);
+
+    // 2) Render PDF pages to canvases
+    addProgressLine('pdf','טוען PDF');
+    const buf = await lineupFile.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({data: buf}).promise;
+    setProgress('pdf', 100);
+
+    const worker = await Tesseract.createWorker('eng', 1, {
+      logger: m => {
+        if(m.status === 'recognizing text'){
+          const el = document.getElementById('current-ocr-target');
+          if(el) setProgress(el.dataset.id, m.progress*100);
+        }
+      }
+    });
+
+    let lineupRawText = '';
+    for(let p=1; p<=pdf.numPages; p++){
+      const pid = 'lineup-p'+p;
+      addProgressLine(pid, `ליינאפ · עמוד ${p} מתוך ${pdf.numPages}`);
+      const page = await pdf.getPage(p);
+      const viewport = page.getViewport({scale:2.5});
+      const canvas = document.createElement('canvas');
+      canvas.width = viewport.width; canvas.height = viewport.height;
+      const ctx = canvas.getContext('2d');
+      await page.render({canvasContext:ctx, viewport}).promise;
+
+      const marker = document.createElement('span');
+      marker.id = 'current-ocr-target'; marker.dataset.id = pid;
+      document.body.appendChild(marker);
+      const { data:{text} } = await worker.recognize(canvas);
+      marker.remove();
+      setProgress(pid,100);
+      lineupRawText += '\n' + text;
+    }
+
+    let archiveRawText = '';
+    for(let i=0;i<archiveFiles.length;i++){
+      const f = archiveFiles[i];
+      const pid = 'arc-'+i;
+      addProgressLine(pid, `תיקייה · ${f.name}`);
+      const imgBitmap = await createImageBitmap(f);
+      const canvas = document.createElement('canvas');
+      const scale = 2;
+      canvas.width = imgBitmap.width*scale; canvas.height = imgBitmap.height*scale;
+      const ctx = canvas.getContext('2d');
+      ctx.imageSmoothingEnabled = true;
+      ctx.drawImage(imgBitmap,0,0,canvas.width,canvas.height);
+
+      const marker = document.createElement('span');
+      marker.id = 'current-ocr-target'; marker.dataset.id = pid;
+      document.body.appendChild(marker);
+      const { data:{text} } = await worker.recognize(canvas);
+      marker.remove();
+      setProgress(pid,100);
+      archiveRawText += '\n' + text;
+    }
+
+    await worker.terminate();
+
+    // 3) Extract candidate IDs
+    const lineupIds = extractIdsFromText(lineupRawText);
+    const archiveIds = extractIdsFromText(archiveRawText);
+
+    $('lineupText').value = lineupIds.join('\n');
+    $('archiveText').value = archiveIds.join('\n');
+    $('checkedDate').value = dateGuess ? dateGuess.display : '';
+    $('checkedDate').dataset.ddmmyy = dateGuess ? dateGuess.ddmmyy : '';
+
+    $('step2').hidden = false;
+    $('step2').scrollIntoView({behavior:'smooth'});
+    $('uploadStatus').textContent = 'הזיהוי הושלם — יש לבדוק את הרשימות למטה.';
+
+  }catch(err){
+    console.error(err);
+    $('ocrError').hidden = false;
+    $('ocrError').textContent = 'הזיהוי האוטומטי נכשל (' + (err.message||err) + '). אפשר להדביק את הרשימות ידנית: ' +
+      'לחצו "חזרה לעריכה" למטה אחרי שתפתחו קודם שלב 2 ידנית, או רעננו ונסו שוב.';
+    $('step2').hidden = false;
+  }finally{
+    $('btnExtract').disabled = false;
+  }
+}
+
+// ---------- Navigation ----------
+$('btnBackToUpload').addEventListener('click', ()=>{ $('step2').hidden = true; });
+$('btnEditAgain').addEventListener('click', ()=>{ $('step3').hidden = true; $('step2').hidden=false; $('step2').scrollIntoView({behavior:'smooth'}); });
+$('btnRestart').addEventListener('click', ()=> location.reload());
+
+// ---------- Comparison logic ----------
+function lcsLength(a,b){
+  const n=a.length,m=b.length;
+  const dp = new Array(m+1).fill(0);
+  for(let i=1;i<=n;i++){
+    let prev=0;
+    for(let j=1;j<=m;j++){
+      const tmp = dp[j];
+      if(a[i-1]===b[j-1]) dp[j]=prev+1;
+      else dp[j]=Math.max(dp[j],dp[j-1]);
+      prev = tmp;
+    }
+  }
+  return dp[m];
+}
+function similarity(a,b){
+  const l = lcsLength(a,b);
+  return (2*l)/(a.length+b.length);
+}
+
+function extractDate(id){
+  const m = id.match(/\d{6}/g);
+  return m ? m[m.length-1] : null;
+}
+
+$('btnCompare').addEventListener('click', runCompare);
+
+function runCompare(){
+  const checkedDateDisplay = $('checkedDate').value.trim();
+  let ddmmyy = $('checkedDate').dataset.ddmmyy;
+  const m = checkedDateDisplay.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if(m){ ddmmyy = m[1].padStart(2,'0')+m[2].padStart(2,'0')+m[3].slice(2); }
+
+  const ignoreTokens = $('ignoreText').value.split('\n').map(s=>s.trim().toLowerCase()).filter(Boolean);
+  const lineupIds = $('lineupText').value.split('\n').map(s=>s.trim()).filter(Boolean);
+  const archiveLines = $('archiveText').value.split('\n').map(s=>s.trim()).filter(Boolean);
+  const archiveIds = archiveLines.map(l=>l.split('.')[0]);
+
+  function isIgnored(id){
+    const low = id.toLowerCase();
+    return ignoreTokens.some(tok=> low.includes(tok));
+  }
+  function existsInArchive(id){
+    const low = id.toLowerCase()+'.';
+    return archiveLines.some(f=> (f.toLowerCase()+'.').startsWith(low) || f.toLowerCase().startsWith(low));
+  }
+
+  const seen = new Set();
+  const listRed=[], listAmber=[], listGray=[], ignoredOut=[];
+
+  lineupIds.forEach(id=>{
+    if(isIgnored(id)){ ignoredOut.push(id); return; }
+    if(seen.has(id)) return;
+    seen.add(id);
+    if(existsInArchive(id)) return;
+    const d = extractDate(id);
+    if(!d){ listGray.push(id); return; }
+    if(ddmmyy && d === ddmmyy) listRed.push(id);
+    else listAmber.push(id);
+  });
+
+  renderResults({checkedDateDisplay, total:seen.size, listRed, listAmber, listGray, ignoredOut, archiveIds});
+}
+
+function renderResults({checkedDateDisplay, total, listRed, listAmber, listGray, ignoredOut, archiveIds}){
+  $('step3').hidden = false;
+  $('step2').hidden = true;
+  $('step3').scrollIntoView({behavior:'smooth'});
+
+  $('lamp').className = 'lamp ' + (listRed.length ? 'on-red' : 'on-green');
+
+  $('summaryChips').innerHTML = `
+    <div class="summary-chip">תאריך נבדק: <b>${checkedDateDisplay || 'לא זוהה'}</b></div>
+    <div class="summary-chip">סה"כ פריטים לאחר סינון: <b>${total}</b></div>
+  `;
+
+  $('countRed').textContent = listRed.length;
+  $('countAmber').textContent = listAmber.length;
+  $('countGray').textContent = listGray.length;
+  $('grayBlock').hidden = listGray.length===0;
+
+  const lcArchiveIds = archiveIds.map(a=>a.toLowerCase());
+
+  function rowHtml(id, withWarn){
+    let warn = '';
+    if(withWarn){
+      let best=null, bestScore=0;
+      lcArchiveIds.forEach(a=>{
+        const s = similarity(id.toLowerCase(), a);
+        if(s>bestScore){bestScore=s; best=a;}
+      });
+      if(best && bestScore>=0.88){
+        warn = `<span class="warn">⚠ קיים ID דומה בתיקייה: ${best}</span>`;
+      }
+    }
+    return `<div class="id-row"><span>${id}</span>${warn}</div>`;
+  }
+
+  $('listRed').innerHTML = listRed.length
+    ? `<div class="id-list">${listRed.map(id=>rowHtml(id,true)).join('')}</div>`
+    : `<div class="empty-note">אין חוסרים ✓</div>`;
+
+  $('listAmber').innerHTML = listAmber.length
+    ? `<div class="id-list">${listAmber.map(id=>rowHtml(id,false)).join('')}</div>`
+    : `<div class="empty-note">אין</div>`;
+
+  $('listGray').innerHTML = listGray.length
+    ? `<div class="id-list">${listGray.map(id=>rowHtml(id,false)).join('')}</div>`
+    : '';
+
+  $('ignoredSummary').textContent = `פריטים שהוחרגו (רשימת ההתעלמות) — ${ignoredOut.length}`;
+  $('ignoredList').textContent = ignoredOut.join('\n');
+}
+</script>
+</body>
+</html>
