@@ -7,686 +7,671 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.0.4/tesseract.min.js"></script>
 <style>
-  :root{
-    --bg:#11141a;
-    --panel:#181d25;
-    --panel2:#1e2530;
-    --border:#2a323e;
-    --text:#e9e6dd;
-    --muted:#8b93a3;
-    --amber:#f0a63c;
-    --amber-dim:#4a3a1f;
-    --red:#e2483d;
-    --red-dim:#3a1f1e;
-    --green:#4fb377;
-    --green-dim:#1c352a;
-    --blue-gray:#8592a8;
-    --mono: 'JetBrains Mono', monospace;
-    --sans: 'Heebo', sans-serif;
-  }
-  *{box-sizing:border-box;}
-  body{
-    margin:0;
-    background:var(--bg);
-    color:var(--text);
-    font-family:var(--sans);
-    padding:32px 20px 80px;
-    min-height:100vh;
-  }
-  .wrap{max-width:880px;margin:0 auto;}
+:root {
+  --bg: #0f1117;
+  --panel: #181b24;
+  --panel2: #1e222d;
+  --border: #282e3a;
+  --text: #e4e1d8;
+  --muted: #7e8694;
+  --accent: #d4a24e;
+  --accent-dim: #2e2618;
+  --red: #d94a3f;
+  --red-bg: #2a1614;
+  --amber: #e0a332;
+  --amber-bg: #2a2214;
+  --green: #3fad6a;
+  --green-bg: #142a1e;
+  --gray-tag: #6b7585;
+  --gray-bg: #1c1f28;
+  --mono: 'JetBrains Mono', monospace;
+  --sans: 'Heebo', sans-serif;
+}
+* { box-sizing: border-box; margin: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  min-height: 100vh;
+  padding: 40px 20px 100px;
+}
+.wrap { max-width: 820px; margin: 0 auto; }
 
-  /* Header */
-  .eyebrow{
-    font-family:var(--mono);
-    font-size:12px;
-    letter-spacing:.14em;
-    color:var(--amber);
-    text-transform:uppercase;
-    display:flex;
-    align-items:center;
-    gap:8px;
-    margin-bottom:10px;
-  }
-  .lamp{
-    width:9px;height:9px;border-radius:50%;
-    background:var(--muted);
-    box-shadow:0 0 0 3px rgba(139,147,163,.15);
-    transition:all .3s;
-  }
-  .lamp.on-red{background:var(--red);box-shadow:0 0 10px 2px rgba(226,72,61,.6),0 0 0 3px rgba(226,72,61,.15);}
-  .lamp.on-green{background:var(--green);box-shadow:0 0 10px 2px rgba(79,179,119,.6),0 0 0 3px rgba(79,179,119,.15);}
-  h1{
-    font-size:28px;
-    font-weight:900;
-    margin:0 0 6px;
-    letter-spacing:-.01em;
-  }
-  .subtitle{color:var(--muted);font-size:14.5px;margin:0 0 36px;line-height:1.6;max-width:60ch;}
+/* Header */
+.header { margin-bottom: 36px; }
+.brand {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: .16em;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.lamp {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--muted);
+  transition: all .4s;
+}
+.lamp.ok { background: var(--green); box-shadow: 0 0 10px rgba(63,173,106,.5); }
+.lamp.alert { background: var(--red); box-shadow: 0 0 10px rgba(217,74,63,.5); }
+h1 {
+  font-size: 26px;
+  font-weight: 900;
+  letter-spacing: -.02em;
+  margin-bottom: 6px;
+}
+.tagline {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.7;
+}
 
-  /* Step sections */
-  .step{
-    background:var(--panel);
-    border:1px solid var(--border);
-    border-radius:12px;
-    padding:22px 24px;
-    margin-bottom:18px;
-  }
-  .step[hidden]{display:none;}
-  .step-head{
-    display:flex;align-items:center;gap:12px;margin-bottom:16px;
-  }
-  .step-num{
-    font-family:var(--mono);
-    font-size:12px;
-    color:var(--bg);
-    background:var(--amber);
-    width:22px;height:22px;
-    border-radius:50%;
-    display:flex;align-items:center;justify-content:center;
-    font-weight:700;
-    flex-shrink:0;
-  }
-  .step-title{font-size:15.5px;font-weight:700;}
-  .step-desc{color:var(--muted);font-size:13px;margin:-8px 0 16px 34px;line-height:1.6;}
+/* Upload area */
+.upload-zone {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 32px 28px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color .2s, background .2s;
+  position: relative;
+}
+.upload-zone:hover, .upload-zone.drag {
+  border-color: var(--accent);
+  background: var(--panel2);
+}
+.upload-zone input { display: none; }
+.upload-icon {
+  font-size: 32px;
+  margin-bottom: 10px;
+  opacity: .7;
+}
+.upload-label {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.upload-hint {
+  font-size: 12.5px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+.upload-files {
+  margin-top: 14px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--accent);
+  line-height: 1.8;
+}
+.upload-files .file-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--accent-dim);
+  border: 1px solid rgba(212,162,78,.25);
+  padding: 4px 12px;
+  border-radius: 6px;
+  margin: 3px 4px;
+}
+.upload-files .file-role {
+  font-size: 10px;
+  color: var(--muted);
+  font-family: var(--sans);
+  font-weight: 500;
+}
 
-  /* Upload zones */
-  .upload-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
-  @media (max-width:640px){.upload-row{grid-template-columns:1fr;}}
-  .dropzone{
-    border:1.5px dashed var(--border);
-    border-radius:10px;
-    padding:22px 16px;
-    text-align:center;
-    cursor:pointer;
-    transition:border-color .2s, background .2s;
-    background:var(--panel2);
-  }
-  .dropzone:hover, .dropzone.drag{border-color:var(--amber);background:#242b36;}
-  .dropzone input{display:none;}
-  .dz-label{font-size:13.5px;font-weight:500;margin-bottom:4px;}
-  .dz-hint{font-size:11.5px;color:var(--muted);}
-  .dz-files{
-    margin-top:10px;font-family:var(--mono);font-size:11px;color:var(--amber);
-    text-align:right;line-height:1.7;word-break:break-all;
-  }
+/* Cards */
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 24px;
+  margin-top: 18px;
+}
+.card[hidden] { display: none; }
+.card-title {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
 
-  button{
-    font-family:var(--sans);
-    font-weight:700;
-    font-size:14px;
-    border:none;
-    border-radius:8px;
-    padding:11px 22px;
-    cursor:pointer;
-    transition:filter .15s, transform .1s;
-  }
-  button:active{transform:scale(.98);}
-  button:disabled{opacity:.4;cursor:not-allowed;}
-  .btn-primary{background:var(--amber);color:#1a1305;}
-  .btn-primary:hover:not(:disabled){filter:brightness(1.08);}
-  .btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text);}
-  .btn-ghost:hover{border-color:var(--muted);}
-  .btn-small{font-size:12px;padding:7px 12px;font-weight:500;width:100%;}
-  .count-warn{
-    background:var(--amber-dim);border:1px solid rgba(240,166,60,.35);color:var(--amber);
-    padding:10px 14px;border-radius:8px;font-size:12.5px;line-height:1.6;margin-top:12px;
-  }
+/* Summary chips */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+.chip {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--muted);
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  padding: 6px 14px;
+  border-radius: 20px;
+}
+.chip b { color: var(--text); }
 
-  .actions{display:flex;gap:10px;margin-top:18px;align-items:center;}
+/* Result blocks */
+.result-block { margin-bottom: 18px; }
+.result-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.result-label { font-size: 14px; font-weight: 700; }
+.badge {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 10px;
+  border-radius: 20px;
+}
+.block-red .badge { background: var(--red-bg); color: var(--red); }
+.block-amber .badge { background: var(--amber-bg); color: var(--amber); }
+.block-gray .badge { background: var(--gray-bg); color: var(--gray-tag); }
 
-  /* Progress */
-  .progress-area{margin-top:16px;}
-  .progress-line{
-    display:flex;align-items:center;gap:10px;
-    font-family:var(--mono);font-size:12px;color:var(--muted);
-    margin-bottom:8px;
-  }
-  .bar{flex:1;height:5px;background:var(--panel2);border-radius:3px;overflow:hidden;}
-  .bar-fill{height:100%;background:var(--amber);width:0%;transition:width .2s;}
+.id-list {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.id-row {
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  direction: ltr;
+  text-align: left;
+}
+.id-row:last-child { border-bottom: none; }
+.block-red .id-row { background: rgba(217,74,63,.06); }
+.block-amber .id-row { background: rgba(224,163,50,.04); }
+.block-gray .id-row { background: rgba(107,117,133,.05); }
+.warn-tag {
+  font-size: 10.5px;
+  color: var(--amber);
+  font-family: var(--sans);
+  white-space: nowrap;
+}
+.empty-ok {
+  text-align: center;
+  padding: 16px;
+  color: var(--green);
+  font-size: 13px;
+  background: var(--green-bg);
+  border-radius: 10px;
+}
 
-  /* Editable fields */
-  label.field-label{
-    display:block;font-size:12.5px;font-weight:700;margin-bottom:6px;color:var(--text);
-  }
-  .field-hint{font-size:11.5px;color:var(--muted);margin:-3px 0 8px;line-height:1.6;}
-  input[type=text]{
-    width:100%;background:var(--panel2);border:1px solid var(--border);color:var(--text);
-    font-family:var(--mono);font-size:13.5px;padding:10px 12px;border-radius:7px;
-  }
-  textarea{
-    width:100%;background:var(--panel2);border:1px solid var(--border);color:var(--text);
-    font-family:var(--mono);font-size:12.5px;line-height:1.7;padding:12px;border-radius:7px;
-    resize:vertical;direction:ltr;text-align:left;
-  }
-  .field{margin-bottom:18px;}
-  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
-  @media (max-width:640px){.two-col{grid-template-columns:1fr;}}
+/* Ignored details */
+details { margin-top: 8px; }
+summary {
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 12px;
+  font-family: var(--mono);
+}
+.ignored-content {
+  margin-top: 8px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted);
+  direction: ltr;
+  text-align: left;
+  line-height: 2;
+}
 
-  /* Results */
-  .summary{
-    display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px;
-  }
-  .summary-chip{
-    font-family:var(--mono);font-size:12px;color:var(--muted);
-    background:var(--panel2);border:1px solid var(--border);
-    padding:7px 12px;border-radius:20px;
-  }
-  .summary-chip b{color:var(--text);}
+/* Edit panel */
+.edit-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+@media (max-width: 640px) { .edit-row { grid-template-columns: 1fr; } }
+.field-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+textarea {
+  width: 100%;
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.7;
+  padding: 12px;
+  border-radius: 8px;
+  resize: vertical;
+  direction: ltr;
+  text-align: left;
+}
+input[type=text] {
+  width: 100%;
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 13px;
+  padding: 9px 12px;
+  border-radius: 8px;
+}
 
-  .result-block{margin-bottom:20px;}
-  .result-head{
-    display:flex;align-items:center;gap:10px;margin-bottom:10px;
-  }
-  .result-title{font-size:14.5px;font-weight:700;}
-  .count-badge{
-    font-family:var(--mono);font-size:11.5px;font-weight:700;
-    padding:2px 9px;border-radius:20px;
-  }
-  .rb-red .count-badge{background:var(--red-dim);color:var(--red);}
-  .rb-amber .count-badge{background:var(--amber-dim);color:var(--amber);}
-  .rb-gray .count-badge{background:var(--panel2);color:var(--blue-gray);}
+/* Buttons */
+.actions { display: flex; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
+button {
+  font-family: var(--sans);
+  font-weight: 700;
+  font-size: 13.5px;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  cursor: pointer;
+  transition: filter .15s, transform .08s;
+}
+button:active { transform: scale(.97); }
+button:disabled { opacity: .35; cursor: not-allowed; }
+.btn-go { background: var(--accent); color: #1a1305; }
+.btn-go:hover:not(:disabled) { filter: brightness(1.1); }
+.btn-ghost {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+.btn-ghost:hover { border-color: var(--muted); }
 
-  .id-list{border:1px solid var(--border);border-radius:9px;overflow:hidden;}
-  .id-row{
-    font-family:var(--mono);font-size:12.5px;
-    padding:10px 14px;
-    border-bottom:1px solid var(--border);
-    display:flex;justify-content:space-between;align-items:center;gap:10px;
-    direction:ltr;text-align:left;
-  }
-  .id-row:last-child{border-bottom:none;}
-  .rb-red .id-row{background:linear-gradient(90deg, rgba(226,72,61,.08), transparent);}
-  .rb-amber .id-row{background:linear-gradient(90deg, rgba(240,166,60,.06), transparent);}
-  .rb-gray .id-row{background:linear-gradient(90deg, rgba(133,146,168,.06), transparent);}
-  .warn{font-size:11px;color:var(--amber);font-family:var(--sans);flex-shrink:0;}
-  .empty-note{
-    font-family:var(--sans);color:var(--green);font-size:13px;
-    padding:14px;text-align:center;background:var(--green-dim);border-radius:9px;
-  }
-
-  details{margin-top:6px;}
-  summary{cursor:pointer;color:var(--muted);font-size:12px;font-family:var(--mono);}
-  .ignored-list{margin-top:8px;font-family:var(--mono);font-size:11.5px;color:var(--muted);direction:ltr;text-align:left;line-height:2;}
-
-  .status-text{font-size:12.5px;color:var(--muted);}
-  .error-box{
-    background:var(--red-dim);border:1px solid rgba(226,72,61,.3);color:#f3b3ae;
-    padding:12px 14px;border-radius:8px;font-size:12.5px;line-height:1.6;margin-top:12px;
-  }
+/* Ignore list inline */
+.ignore-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+.ignore-bar .il-label {
+  font-size: 11.5px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.ignore-tokens {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.ignore-token {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  padding: 3px 8px;
+  border-radius: 4px;
+}
 </style>
 </head>
 <body>
 <div class="wrap">
 
-  <div class="eyebrow"><span class="lamp" id="lamp"></span> בקרת ארכיון · כאן חדשות</div>
-  <h1>בדיקת ליינאפ מול ארכיון</h1>
-  <p class="subtitle">מעלים את קובץ הליינאפ ואת צילומי המסך של תיקיית הארכיון, בודקים ומתקנים את הזיהוי האוטומטי, ומקבלים את שתי רשימות החוסרים.</p>
-
-  <!-- STEP 1: Upload -->
-  <div class="step" id="step1">
-    <div class="step-head"><div class="step-num">1</div><div class="step-title">העלאת קבצים</div></div>
-    <div class="step-desc">קובץ PDF אחד של הליינאפ, וצילום מסך אחד או יותר של תוכן תיקיית הארכיון.</div>
-
-    <div class="upload-row">
-      <label class="dropzone" id="dzLineup">
-        <input type="file" id="fileLineup" accept="application/pdf">
-        <div class="dz-label">📋 קובץ הליינאפ (PDF)</div>
-        <div class="dz-hint">גררו לכאן או לחצו לבחירה</div>
-        <div class="dz-files" id="filesLineupList"></div>
-      </label>
-      <label class="dropzone" id="dzArchive">
-        <input type="file" id="fileArchive" accept="image/*" multiple>
-        <div class="dz-label">🗂️ צילומי מסך של הארכיון</div>
-        <div class="dz-hint">אפשר לבחור כמה תמונות יחד</div>
-        <div class="dz-files" id="filesArchiveList"></div>
-      </label>
-    </div>
-
-    <div class="upload-row" style="margin-top:10px;">
-      <div>
-        <button class="btn-ghost btn-small" id="toggleLineupPaste" type="button">יש לי כבר רשימת ID-ים בטקסט (בלי OCR)</button>
-        <textarea id="pasteLineup" rows="6" placeholder="שורה לכל ID..." hidden style="margin-top:8px;"></textarea>
-      </div>
-      <div>
-        <button class="btn-ghost btn-small" id="toggleArchivePaste" type="button">יש לי כבר רשימת קבצים בטקסט (בלי OCR)</button>
-        <textarea id="pasteArchive" rows="6" placeholder="שורה לכל שם קובץ..." hidden style="margin-top:8px;"></textarea>
-      </div>
-    </div>
-
-    <div class="actions">
-      <button class="btn-primary" id="btnExtract" disabled>זיהוי אוטומטי (OCR)</button>
-      <span class="status-text" id="uploadStatus"></span>
-    </div>
-
-    <div class="progress-area" id="progressArea" hidden></div>
-    <div class="error-box" id="ocrError" hidden></div>
+  <div class="header">
+    <div class="brand"><span class="lamp" id="lamp"></span>בקרת ארכיון · כאן חדשות</div>
+    <h1>בדיקת ליינאפ מול ארכיון</h1>
+    <p class="tagline">מעלים שני קבצי טקסט — הליינאפ ותיקיית הארכיון — ומקבלים רשימת חוסרים מיידית.</p>
   </div>
 
-  <!-- STEP 2: Review -->
-  <div class="step" id="step2" hidden>
-    <div class="step-head"><div class="step-num">2</div><div class="step-title">בדיקה ועריכה לפני השוואה</div></div>
-    <div class="step-desc">זיהוי אוטומטי (OCR) עלול לטעות בשמות דומים — חשוב לעבור על הרשימות לפני שממשיכים.</div>
-    <div class="count-warn" id="countWarnBanner" hidden></div>
+  <!-- Upload -->
+  <label class="upload-zone" id="dropZone">
+    <input type="file" id="fileInput" accept=".txt,text/plain" multiple>
+    <div class="upload-icon">📂</div>
+    <div class="upload-label">גררו לכאן שני קבצי TXT</div>
+    <div class="upload-hint">קובץ ליינאפ (עם LINUP בשם) + קובץ תיקיית ארכיון (שם = תאריך, למשל 260825.txt)</div>
+    <div class="upload-files" id="fileDisplay"></div>
+  </label>
 
-    <div class="field">
-      <label class="field-label">תאריך נבדק</label>
-      <input type="text" id="checkedDate" placeholder="DD/MM/YYYY">
-      <div class="field-hint">זוהה אוטומטית משם קובץ הליינאפ. אפשר לתקן ידנית אם צריך.</div>
-    </div>
-
-    <div class="two-col">
-      <div class="field">
-        <label class="field-label">ID-ים שזוהו בליינאפ</label>
-        <div class="field-hint">שורה לכל פריט. אפשר למחוק, לתקן או להוסיף שורות.</div>
-        <textarea id="lineupText" rows="14"></textarea>
-      </div>
-      <div class="field">
-        <label class="field-label">שמות קבצים שזוהו בתיקייה</label>
-        <div class="field-hint">שורה לכל קובץ (מספיק החלק שלפני הנקודה הראשונה).</div>
-        <textarea id="archiveText" rows="14"></textarea>
-      </div>
-    </div>
-
-    <div class="field">
-      <label class="field-label">רשימת התעלמות קבועה</label>
-      <div class="field-hint">כל ID שמכיל אחד מהערכים האלה (לא תלוי רישיות) יוחרג מהבדיקה.</div>
-      <textarea id="ignoreText" rows="4">kotarot
-prpr
-hin
-promo
-div_
-20_vtr_exit_KTC
-20_vtr_back_CTK
-20_vtr_wiper_KTK</textarea>
-    </div>
-
-    <div class="actions">
-      <button class="btn-primary" id="btnCompare">השוואה</button>
-      <button class="btn-ghost" id="btnBackToUpload">חזרה להעלאה</button>
-    </div>
+  <div class="ignore-bar">
+    <span class="il-label">מוחרגים:</span>
+    <div class="ignore-tokens" id="ignoreTokensDisplay"></div>
   </div>
 
-  <!-- STEP 3: Results -->
-  <div class="step" id="step3" hidden>
-    <div class="step-head"><div class="step-num">3</div><div class="step-title">תוצאות</div></div>
+  <!-- Results -->
+  <div class="card" id="resultsCard" hidden>
+    <div class="chips" id="chips"></div>
 
-    <div class="summary" id="summaryChips"></div>
-
-    <div class="result-block rb-red">
+    <div class="result-block block-red">
       <div class="result-head">
-        <div class="result-title">חוסרים בתיקייה — תאריך תואם</div>
-        <div class="count-badge" id="countRed">0</div>
+        <span class="result-label">חסר בתיקייה — תאריך תואם</span>
+        <span class="badge" id="badgeRed">0</span>
       </div>
       <div id="listRed"></div>
     </div>
 
-    <div class="result-block rb-amber">
+    <div class="result-block block-amber">
       <div class="result-head">
-        <div class="result-title">חוסרים עם תאריך אחר (כנראה כבר מאורכבים)</div>
-        <div class="count-badge" id="countAmber">0</div>
+        <span class="result-label">חסר, תאריך אחר (אמור להיות מאורכב)</span>
+        <span class="badge" id="badgeAmber">0</span>
       </div>
       <div id="listAmber"></div>
     </div>
 
-    <div class="result-block rb-gray" id="grayBlock" hidden>
+    <div class="result-block block-gray" id="grayBlock" hidden>
       <div class="result-head">
-        <div class="result-title">לא ניתן לקבוע תאריך — נדרשת בדיקה ידנית</div>
-        <div class="count-badge" id="countGray">0</div>
+        <span class="result-label">לא ניתן לקבוע תאריך</span>
+        <span class="badge" id="badgeGray">0</span>
       </div>
       <div id="listGray"></div>
     </div>
 
     <details>
-      <summary id="ignoredSummary">פריטים שהוחרגו (רשימת ההתעלמות)</summary>
-      <div class="ignored-list" id="ignoredList"></div>
+      <summary id="ignoredSummary">פריטים שהוחרגו — 0</summary>
+      <div class="ignored-content" id="ignoredList"></div>
     </details>
 
-    <div class="actions" style="margin-top:22px;">
-      <button class="btn-ghost" id="btnEditAgain">חזרה לעריכה</button>
-      <button class="btn-ghost" id="btnRestart">בדיקה חדשה</button>
+    <div class="actions">
+      <button class="btn-ghost" id="btnEdit">עריכה ידנית</button>
+      <button class="btn-ghost" id="btnReset">בדיקה חדשה</button>
+    </div>
+  </div>
+
+  <!-- Manual edit panel -->
+  <div class="card" id="editCard" hidden>
+    <div class="card-title">עריכה ידנית</div>
+    <div style="margin-bottom:14px;">
+      <label class="field-label">תאריך נבדק (DDMMYY)</label>
+      <input type="text" id="editDate" placeholder="260825">
+    </div>
+    <div class="edit-row">
+      <div>
+        <label class="field-label">ID-ים מהליינאפ</label>
+        <textarea id="editLineup" rows="14"></textarea>
+      </div>
+      <div>
+        <label class="field-label">שמות קבצים מהתיקייה</label>
+        <textarea id="editArchive" rows="14"></textarea>
+      </div>
+    </div>
+    <div style="margin-top:14px;">
+      <label class="field-label">רשימת התעלמות (שורה לכל ערך)</label>
+      <textarea id="editIgnore" rows="4"></textarea>
+    </div>
+    <div class="actions">
+      <button class="btn-go" id="btnRunManual">השוואה</button>
+      <button class="btn-ghost" id="btnCancelEdit">ביטול</button>
     </div>
   </div>
 
 </div>
 
 <script>
-let lineupFile = null;
-let archiveFiles = [];
+const IGNORE_DEFAULT = [
+  'kotarot','katarot','cotarot','prpr','hin','promo','div_',
+  '20_vtr_exit_KTC','20_vtr_back_CTK','20_vtr_wiper_KTK'
+];
+
+let ignoreList = [...IGNORE_DEFAULT];
+let lastLineupIds = [];
+let lastArchiveNames = [];
+let lastDate = '';
 
 const $ = id => document.getElementById(id);
 
-// ---------- Upload handling ----------
-function setupDropzone(dzId, inputId, isMultiple, onChange){
-  const dz = $(dzId), input = $(inputId);
-  dz.addEventListener('dragover', e=>{e.preventDefault(); dz.classList.add('drag');});
-  dz.addEventListener('dragleave', ()=> dz.classList.remove('drag'));
-  dz.addEventListener('drop', e=>{
-    e.preventDefault(); dz.classList.remove('drag');
-    input.files = e.dataTransfer.files;
-    onChange(e.dataTransfer.files);
-  });
-  input.addEventListener('change', ()=> onChange(input.files));
+// Show ignore tokens
+function renderIgnoreTokens() {
+  $('ignoreTokensDisplay').innerHTML = ignoreList
+    .map(t => `<span class="ignore-token">${t}</span>`).join('');
 }
+renderIgnoreTokens();
 
-setupDropzone('dzLineup','fileLineup',false, files=>{
-  lineupFile = files[0] || null;
-  $('filesLineupList').textContent = lineupFile ? lineupFile.name : '';
-  updateExtractButton();
+// --- File handling ---
+const dropZone = $('dropZone');
+const fileInput = $('fileInput');
+
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('drag');
+  handleFiles(Array.from(e.dataTransfer.files));
 });
-setupDropzone('dzArchive','fileArchive',true, files=>{
-  archiveFiles = Array.from(files);
-  $('filesArchiveList').textContent = archiveFiles.map(f=>f.name).join('\n');
-  updateExtractButton();
-});
+fileInput.addEventListener('change', () => handleFiles(Array.from(fileInput.files)));
 
-function updateExtractButton(){
-  const lineupReady = lineupFile || $('pasteLineup').value.trim().length>0;
-  const archiveReady = archiveFiles.length>0 || $('pasteArchive').value.trim().length>0;
-  $('btnExtract').disabled = !(lineupReady && archiveReady);
-  $('btnExtract').textContent = (lineupFile || archiveFiles.length>0) ? 'זיהוי אוטומטי (OCR) והשלמה' : 'המשך';
-}
-
-function setupPasteToggle(btnId, taId, dzId){
-  $(btnId).addEventListener('click', ()=>{
-    const ta = $(taId);
-    ta.hidden = !ta.hidden;
-    $(btnId).textContent = ta.hidden ? btnId==='toggleLineupPaste' ? 'יש לי כבר רשימת ID-ים בטקסט (בלי OCR)' : 'יש לי כבר רשימת קבצים בטקסט (בלי OCR)' : 'הסתר / חזרה להעלאת קובץ';
-    updateExtractButton();
-  });
-  $(taId).addEventListener('input', updateExtractButton);
-}
-setupPasteToggle('toggleLineupPaste','pasteLineup','dzLineup');
-setupPasteToggle('toggleArchivePaste','pasteArchive','dzArchive');
-
-// ---------- Date parsing from filename ----------
-function guessDateFromFilename(name){
-  // patterns like 25_8_2025 or 25_08_2025
-  const m = name.match(/(\d{1,2})_(\d{1,2})_(\d{4})/);
-  if(!m) return null;
-  const dd = m[1].padStart(2,'0'), mm = m[2].padStart(2,'0'), yyyy = m[3];
-  return { display: `${dd}/${mm}/${yyyy}`, ddmmyy: dd+mm+yyyy.slice(2) };
-}
-
-// ---------- Progress UI ----------
-function addProgressLine(id, label){
-  const area = $('progressArea');
-  area.hidden = false;
-  const line = document.createElement('div');
-  line.className = 'progress-line';
-  line.id = 'prog-'+id;
-  line.innerHTML = `<span>${label}</span><div class="bar"><div class="bar-fill" id="bar-${id}"></div></div><span id="pct-${id}">0%</span>`;
-  area.appendChild(line);
-}
-function setProgress(id, pct){
-  const fill = $('bar-'+id), pctEl = $('pct-'+id);
-  if(fill) fill.style.width = pct+'%';
-  if(pctEl) pctEl.textContent = Math.round(pct)+'%';
-}
-
-// ---------- ID extraction regexes ----------
-const ID_TOKEN_RE = /\b[A-Za-z][A-Za-z0-9]*(?:_[A-Za-z0-9]+)+_\d{6}[A-Za-z0-9]*\b/g;
-
-function extractIdsFromText(text){
-  const matches = text.match(ID_TOKEN_RE) || [];
-  // strip common prefixes accidentally glued via OCR
-  return matches.map(m=>m.replace(/^(VTR|VO|SYNC)[:_]*/i,''));
-}
-
-// ---------- Main OCR flow ----------
-$('btnExtract').addEventListener('click', runExtraction);
-
-async function runExtraction(){
-  $('btnExtract').disabled = true;
-  $('ocrError').hidden = true;
-  $('progressArea').innerHTML = '';
-  $('progressArea').hidden = false;
-  $('uploadStatus').textContent = 'מתחיל עיבוד...';
-
-  const lineupPasted = $('pasteLineup').value.trim();
-  const archivePasted = $('pasteArchive').value.trim();
-
-  try{
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-
-    // date guess only relevant if we have the actual PDF file
-    const dateGuess = lineupFile ? guessDateFromFilename(lineupFile.name) : null;
-
-    let lineupIds = [];
-    let archiveIds = [];
-
-    // Only spin up the OCR worker if at least one side actually needs it
-    let worker = null;
-    if(lineupFile || archiveFiles.length>0){
-      worker = await Tesseract.createWorker('eng', 1, {
-        logger: m => {
-          if(m.status === 'recognizing text'){
-            const el = document.getElementById('current-ocr-target');
-            if(el) setProgress(el.dataset.id, m.progress*100);
-          }
-        }
-      });
-      // Constrain recognition to the character set IDs actually use, and treat
-      // each region as a uniform block of text rather than fully-automatic
-      // layout analysis (which tends to fail on dense RTL tables).
-      await worker.setParameters({
-        tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_.,:',
-        tessedit_pageseg_mode: '6'
-      });
-    }
-
-    if(lineupFile){
-      const buf = await lineupFile.arrayBuffer();
-      const pdf = await pdfjsLib.getDocument({data: buf}).promise;
-      let lineupRawText = '';
-      for(let p=1; p<=pdf.numPages; p++){
-        const pid = 'lineup-p'+p;
-        addProgressLine(pid, `ליינאפ · עמוד ${p} מתוך ${pdf.numPages}`);
-        const page = await pdf.getPage(p);
-        const viewport = page.getViewport({scale:3.5});
-        const canvas = document.createElement('canvas');
-        canvas.width = viewport.width; canvas.height = viewport.height;
-        const ctx = canvas.getContext('2d');
-        ctx.fillStyle = '#fff'; ctx.fillRect(0,0,canvas.width,canvas.height);
-        await page.render({canvasContext:ctx, viewport}).promise;
-
-        const marker = document.createElement('span');
-        marker.id = 'current-ocr-target'; marker.dataset.id = pid;
-        document.body.appendChild(marker);
-        const { data:{text} } = await worker.recognize(canvas);
-        marker.remove();
-        setProgress(pid,100);
-        lineupRawText += '\n' + text;
-      }
-      lineupIds = extractIdsFromText(lineupRawText);
-    } else {
-      lineupIds = lineupPasted.split('\n').map(s=>s.trim()).filter(Boolean)
-        .map(m=>m.replace(/^(VTR|VO|SYNC)[:_]*/i,''));
-    }
-
-    if(archiveFiles.length>0){
-      let archiveRawText = '';
-      for(let i=0;i<archiveFiles.length;i++){
-        const f = archiveFiles[i];
-        const pid = 'arc-'+i;
-        addProgressLine(pid, `תיקייה · ${f.name}`);
-        const imgBitmap = await createImageBitmap(f);
-        const canvas = document.createElement('canvas');
-        const scale = 3;
-        canvas.width = imgBitmap.width*scale; canvas.height = imgBitmap.height*scale;
-        const ctx = canvas.getContext('2d');
-        ctx.fillStyle = '#fff'; ctx.fillRect(0,0,canvas.width,canvas.height);
-        ctx.imageSmoothingEnabled = true;
-        ctx.drawImage(imgBitmap,0,0,canvas.width,canvas.height);
-
-        const marker = document.createElement('span');
-        marker.id = 'current-ocr-target'; marker.dataset.id = pid;
-        document.body.appendChild(marker);
-        const { data:{text} } = await worker.recognize(canvas);
-        marker.remove();
-        setProgress(pid,100);
-        archiveRawText += '\n' + text;
-      }
-      archiveIds = extractIdsFromText(archiveRawText);
-    } else {
-      archiveIds = archivePasted.split('\n').map(s=>s.trim()).filter(Boolean);
-    }
-
-    if(worker) await worker.terminate();
-
-    $('lineupText').value = lineupIds.join('\n');
-    $('archiveText').value = archiveIds.join('\n');
-    $('checkedDate').value = dateGuess ? dateGuess.display : '';
-    $('checkedDate').dataset.ddmmyy = dateGuess ? dateGuess.ddmmyy : '';
-
-    // Sanity banner — OCR on this kind of dense table sometimes extracts
-    // almost nothing without failing loudly. Surface that clearly instead
-    // of silently producing a near-empty (and misleading) comparison.
-    const warnBanner = $('countWarnBanner');
-    const lowLineup = lineupFile && lineupIds.length < 15;
-    const lowArchive = archiveFiles.length>0 && archiveIds.length < 15;
-    if(lowLineup || lowArchive){
-      warnBanner.hidden = false;
-      warnBanner.innerHTML = `⚠ זוהו רק ${lineupIds.length} פריטים בליינאף ו-${archiveIds.length} בתיקייה — זה נמוך משמעותית ממה שמצופה במהדורה טיפוסית (בדרך כלל 50+ ו-90+ בהתאמה). ` +
-        `כנראה שה-OCR לא הצליח לקרוא את הטבלה כמו שצריך. מומלץ לא להסתמך על התוצאה הזו, ולנסות: העלאת התמונות בנפרד (עמוד/צילום אחד בכל פעם), רזולוציה גבוהה יותר, או להדביק את הרשימה כטקסט (למשל ישירות מתוך שיחה עם קלוד).`;
-    } else {
-      warnBanner.hidden = true;
-    }
-
-    $('step2').hidden = false;
-    $('step2').scrollIntoView({behavior:'smooth'});
-    $('uploadStatus').textContent = 'העיבוד הושלם — יש לבדוק את הרשימות למטה.';
-
-  }catch(err){
-    console.error(err);
-    $('ocrError').hidden = false;
-    $('ocrError').textContent = 'העיבוד נכשל (' + (err.message||err) + '). אפשר להדביק את הרשימות ידנית בתיבות "יש לי כבר רשימה בטקסט" ולנסות שוב, או לערוך ישירות בשלב 2.';
-    $('step2').hidden = false;
-  }finally{
-    $('btnExtract').disabled = false;
+function classifyFiles(files) {
+  // Find which is lineup (LINUP in name) and which is archive (date-only name)
+  let lineup = null, archive = null;
+  for (const f of files) {
+    const name = f.name.toUpperCase();
+    if (name.includes('LINUP')) lineup = f;
+    else archive = f;
   }
+  // If we couldn't classify by LINUP, try the other way: date-only name
+  if (!lineup && !archive && files.length === 2) {
+    // The one with fewer non-digit chars in the basename is probably the date file
+    const base = f => f.name.replace(/\.txt$/i, '');
+    const isDateName = f => /^\d{6}$/.test(base(f));
+    for (const f of files) {
+      if (isDateName(f)) archive = f;
+      else lineup = f;
+    }
+  }
+  return { lineup, archive };
 }
 
-// ---------- Navigation ----------
-$('btnBackToUpload').addEventListener('click', ()=>{ $('step2').hidden = true; });
-$('btnEditAgain').addEventListener('click', ()=>{ $('step3').hidden = true; $('step2').hidden=false; $('step2').scrollIntoView({behavior:'smooth'}); });
-$('btnRestart').addEventListener('click', ()=> location.reload());
+function extractDateFromFilename(name) {
+  const base = name.replace(/\.txt$/i, '');
+  const m6 = base.match(/(\d{6})/);
+  if (m6) return m6[1]; // DDMMYY
+  return '';
+}
 
-// ---------- Comparison logic ----------
-function lcsLength(a,b){
-  const n=a.length,m=b.length;
-  const dp = new Array(m+1).fill(0);
-  for(let i=1;i<=n;i++){
-    let prev=0;
-    for(let j=1;j<=m;j++){
+async function handleFiles(files) {
+  const txtFiles = files.filter(f => f.name.toLowerCase().endsWith('.txt'));
+  if (txtFiles.length < 2) {
+    $('fileDisplay').innerHTML = '<span style="color:var(--red)">צריך בדיוק שני קבצי TXT</span>';
+    return;
+  }
+
+  const { lineup, archive } = classifyFiles(txtFiles.slice(0, 2));
+  if (!lineup || !archive) {
+    $('fileDisplay').innerHTML = '<span style="color:var(--red)">לא הצלחתי לזהות מי הליינאפ ומי הארכיון — ודאו ששם הליינאפ מכיל LINUP</span>';
+    return;
+  }
+
+  $('fileDisplay').innerHTML =
+    `<span class="file-tag">${lineup.name} <span class="file-role">ליינאפ</span></span>` +
+    `<span class="file-tag">${archive.name} <span class="file-role">ארכיון</span></span>`;
+
+  const lineupText = await lineup.text();
+  const archiveText = await archive.text();
+
+  lastDate = extractDateFromFilename(archive.name);
+  lastLineupIds = parseLineupIds(lineupText);
+  lastArchiveNames = parseArchiveNames(archiveText);
+
+  runComparison(lastDate, lastLineupIds, lastArchiveNames, ignoreList);
+}
+
+// --- Parsing ---
+function parseLineupIds(text) {
+  return text.split('\n')
+    .map(line => line.trim())
+    .filter(Boolean)
+    .map(line => line.replace(/^(VTR|VO|SYNC)[:_\s]*/i, '').trim())
+    .filter(Boolean);
+}
+
+function parseArchiveNames(text) {
+  return text.split('\n')
+    .map(line => line.trim())
+    .filter(Boolean);
+}
+
+// --- Comparison engine ---
+function stripVersion(id) {
+  return id.replace(/[Vv]\d+$/, '');
+}
+
+function getBaseId(archiveName) {
+  // Take everything before the first dot, then strip version
+  const beforeDot = archiveName.split('.')[0];
+  return stripVersion(beforeDot);
+}
+
+function extractDate6(id) {
+  const matches = id.match(/\d{6}/g);
+  return matches ? matches[matches.length - 1] : null;
+}
+
+function similarity(a, b) {
+  // LCS-based similarity
+  const n = a.length, m = b.length;
+  const dp = new Array(m + 1).fill(0);
+  for (let i = 1; i <= n; i++) {
+    let prev = 0;
+    for (let j = 1; j <= m; j++) {
       const tmp = dp[j];
-      if(a[i-1]===b[j-1]) dp[j]=prev+1;
-      else dp[j]=Math.max(dp[j],dp[j-1]);
+      if (a[i-1] === b[j-1]) dp[j] = prev + 1;
+      else dp[j] = Math.max(dp[j], dp[j-1]);
       prev = tmp;
     }
   }
-  return dp[m];
-}
-function similarity(a,b){
-  const l = lcsLength(a,b);
-  return (2*l)/(a.length+b.length);
+  return (2 * dp[m]) / (n + m);
 }
 
-function extractDate(id){
-  const m = id.match(/\d{6}/g);
-  return m ? m[m.length-1] : null;
-}
+function runComparison(ddmmyy, lineupIds, archiveNames, ignore) {
+  const archiveBases = archiveNames.map(n => getBaseId(n).toLowerCase());
+  const archiveBaseSet = new Set(archiveBases);
 
-$('btnCompare').addEventListener('click', runCompare);
-
-function runCompare(){
-  const checkedDateDisplay = $('checkedDate').value.trim();
-  let ddmmyy = $('checkedDate').dataset.ddmmyy;
-  const m = checkedDateDisplay.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
-  if(m){ ddmmyy = m[1].padStart(2,'0')+m[2].padStart(2,'0')+m[3].slice(2); }
-
-  const ignoreTokens = $('ignoreText').value.split('\n').map(s=>s.trim().toLowerCase()).filter(Boolean);
-  const lineupIds = $('lineupText').value.split('\n').map(s=>s.trim()).filter(Boolean);
-  const archiveLines = $('archiveText').value.split('\n').map(s=>s.trim()).filter(Boolean);
-  const archiveIds = archiveLines.map(l=>l.split('.')[0]);
-
-  function isIgnored(id){
+  function isIgnored(id) {
     const low = id.toLowerCase();
-    return ignoreTokens.some(tok=> low.includes(tok));
-  }
-  function existsInArchive(id){
-    const low = id.toLowerCase()+'.';
-    return archiveLines.some(f=> (f.toLowerCase()+'.').startsWith(low) || f.toLowerCase().startsWith(low));
+    return ignore.some(tok => low.includes(tok.toLowerCase()));
   }
 
-  const seen = new Set();
-  const listRed=[], listAmber=[], listGray=[], ignoredOut=[];
+  function existsInArchive(id) {
+    const base = stripVersion(id).toLowerCase();
+    return archiveBaseSet.has(base);
+  }
 
-  lineupIds.forEach(id=>{
-    if(isIgnored(id)){ ignoredOut.push(id); return; }
-    if(seen.has(id)) return;
-    seen.add(id);
-    if(existsInArchive(id)) return;
-    const d = extractDate(id);
-    if(!d){ listGray.push(id); return; }
-    if(ddmmyy && d === ddmmyy) listRed.push(id);
-    else listAmber.push(id);
-  });
+  const seenBases = new Set();
+  const redItems = [], amberItems = [], grayItems = [], ignoredItems = [];
+  let totalAfterFilter = 0;
 
-  renderResults({checkedDateDisplay, total:seen.size, listRed, listAmber, listGray, ignoredOut, archiveIds});
-}
+  for (const id of lineupIds) {
+    if (isIgnored(id)) { ignoredItems.push(id); continue; }
 
-function renderResults({checkedDateDisplay, total, listRed, listAmber, listGray, ignoredOut, archiveIds}){
-  $('step3').hidden = false;
-  $('step2').hidden = true;
-  $('step3').scrollIntoView({behavior:'smooth'});
+    const base = stripVersion(id).toLowerCase();
+    if (seenBases.has(base)) continue;
+    seenBases.add(base);
+    totalAfterFilter++;
 
-  $('lamp').className = 'lamp ' + (listRed.length ? 'on-red' : 'on-green');
+    if (existsInArchive(id)) continue;
 
-  $('summaryChips').innerHTML = `
-    <div class="summary-chip">תאריך נבדק: <b>${checkedDateDisplay || 'לא זוהה'}</b></div>
-    <div class="summary-chip">סה"כ פריטים לאחר סינון: <b>${total}</b></div>
-  `;
+    const displayId = stripVersion(id);
+    const d = extractDate6(id);
 
-  $('countRed').textContent = listRed.length;
-  $('countAmber').textContent = listAmber.length;
-  $('countGray').textContent = listGray.length;
-  $('grayBlock').hidden = listGray.length===0;
-
-  const lcArchiveIds = archiveIds.map(a=>a.toLowerCase());
-
-  function rowHtml(id, withWarn){
-    let warn = '';
-    if(withWarn){
-      let best=null, bestScore=0;
-      lcArchiveIds.forEach(a=>{
-        const s = similarity(id.toLowerCase(), a);
-        if(s>bestScore){bestScore=s; best=a;}
-      });
-      if(best && bestScore>=0.88){
-        warn = `<span class="warn">⚠ קיים ID דומה בתיקייה: ${best}</span>`;
+    if (!d) {
+      grayItems.push({ id: displayId, warn: '' });
+    } else if (ddmmyy && d === ddmmyy) {
+      // Check near-match
+      let warn = '';
+      let bestScore = 0, bestMatch = '';
+      for (const ab of archiveBases) {
+        const s = similarity(displayId.toLowerCase(), ab);
+        if (s > bestScore) { bestScore = s; bestMatch = ab; }
       }
+      if (bestScore >= 0.88 && !archiveBaseSet.has(displayId.toLowerCase())) {
+        warn = `⚠ ID דומה בתיקייה: ${bestMatch}`;
+      }
+      redItems.push({ id: displayId, warn });
+    } else {
+      amberItems.push({ id: displayId, warn: '' });
     }
-    return `<div class="id-row"><span>${id}</span>${warn}</div>`;
   }
 
-  $('listRed').innerHTML = listRed.length
-    ? `<div class="id-list">${listRed.map(id=>rowHtml(id,true)).join('')}</div>`
-    : `<div class="empty-note">אין חוסרים ✓</div>`;
-
-  $('listAmber').innerHTML = listAmber.length
-    ? `<div class="id-list">${listAmber.map(id=>rowHtml(id,false)).join('')}</div>`
-    : `<div class="empty-note">אין</div>`;
-
-  $('listGray').innerHTML = listGray.length
-    ? `<div class="id-list">${listGray.map(id=>rowHtml(id,false)).join('')}</div>`
-    : '';
-
-  $('ignoredSummary').textContent = `פריטים שהוחרגו (רשימת ההתעלמות) — ${ignoredOut.length}`;
-  $('ignoredList').textContent = ignoredOut.join('\n');
+  renderResults({
+    ddmmyy,
+    totalAfterFilter,
+    redItems,
+    amberItems,
+    grayItems,
+    ignoredItems
+  });
 }
+
+// --- Render ---
+function renderResults({ ddmmyy, totalAfterFilter, redItems, amberItems, grayItems, ignoredItems }) {
+  $('resultsCard').hidden = false;
+  $('editCard').hidden = true;
+
+  const dateDisplay = ddmmyy
+    ? `${ddmmyy.slice(0,2)}/${ddmmyy.slice(2,4)}/${ddmmyy.slice(4)}`
+    : 'לא זוהה';
+
+  $('lamp').className = 'lamp ' + (redItems.length > 0 ? 'alert' : 'ok');
+
+  $('chips').innerHTML =
+    `<span class="chip">תאריך: <b>${dateDisplay}</b></span>` +
+    `<span class="chip">פריטים לאחר סינון: <b>${totalAfterFilter}</b></span>` +
+    `<span class="chip">חוסרים: <b style="color:var(--red)">${redItems.length}</b></span>`;
+
+  $('badgeRed').textContent = redItems.length;
+  $('badgeAmber').textContent = amberItems.length;
+  $('badgeGray').textContent = grayItems.length;
+  $('grayBlock').hidden = grayItems.length === 0;
+
+  function renderList(items) {
+    if (!items.length) return '<div class="empty-ok">אין ✓</div>';
+    return '<div class="id-list">' + items.map(it =>
+      `<div class="id-row"><span>${it.id}</span>${it.warn ? `<span class="warn-tag">${it.warn}</span>` : ''}</div>`
+    ).join('') + '</div>';
+  }
+
+  $('listRed').innerHTML = renderList(redItems);
+  $('listAmber').innerHTML = renderList(amberItems);
+  $('listGray').innerHTML = renderList(grayItems);
+
+  $('ignoredSummary').textContent = `פריטים שהוחרגו — ${ignoredItems.length}`;
+  $('ignoredList').textContent = ignoredItems.join('\n');
+
+  $('resultsCard').scrollIntoView({ behavior: 'smooth' });
+}
+
+// --- Edit panel ---
+$('btnEdit').addEventListener('click', () => {
+  $('editDate').value = lastDate;
+  $('editLineup').value = lastLineupIds.join('\n');
+  $('editArchive').value = lastArchiveNames.join('\n');
+  $('editIgnore').value = ignoreList.join('\n');
+  $('resultsCard').hidden = true;
+  $('editCard').hidden = false;
+  $('editCard').scrollIntoView({ behavior: 'smooth' });
+});
+
+$('btnCancelEdit').addEventListener('click', () => {
+  $('editCard').hidden = true;
+  $('resultsCard').hidden = false;
+});
+
+$('btnRunManual').addEventListener('click', () => {
+  lastDate = $('editDate').value.trim();
+  lastLineupIds = $('editLineup').value.split('\n').map(s => s.trim()).filter(Boolean);
+  lastArchiveNames = $('editArchive').value.split('\n').map(s => s.trim()).filter(Boolean);
+  ignoreList = $('editIgnore').value.split('\n').map(s => s.trim()).filter(Boolean);
+  renderIgnoreTokens();
+  runComparison(lastDate, lastLineupIds, lastArchiveNames, ignoreList);
+});
+
+$('btnReset').addEventListener('click', () => {
+  location.reload();
+});
 </script>
 </body>
 </html>
