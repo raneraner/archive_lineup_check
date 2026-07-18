@@ -3,29 +3,33 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>בדיקת ליינאפ מול ארכיון</title>
+<title>ארכיון חטיבת החדשות — בדיקת ליינאפ</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 :root {
-  --bg: #0f1117;
-  --panel: #181b24;
-  --panel2: #1e222d;
-  --border: #282e3a;
-  --text: #e4e1d8;
-  --muted: #7e8694;
-  --accent: #d4a24e;
-  --accent-dim: #2e2618;
-  --red: #d94a3f;
-  --red-bg: #2a1614;
-  --amber: #e0a332;
-  --amber-bg: #2a2214;
-  --green: #3fad6a;
-  --green-bg: #142a1e;
-  --gray-tag: #6b7585;
-  --gray-bg: #1c1f28;
-  --mono: 'JetBrains Mono', monospace;
+  --bg: #f4f5f7;
+  --white: #ffffff;
+  --border: #dfe2e8;
+  --text: #1d2433;
+  --muted: #6b7280;
+  --accent: #2563eb;
+  --accent-hover: #1d4ed8;
+  --red: #dc2626;
+  --red-bg: #fef2f2;
+  --red-border: #fecaca;
+  --amber: #b45309;
+  --amber-bg: #fffbeb;
+  --amber-border: #fde68a;
+  --green: #16a34a;
+  --green-bg: #f0fdf4;
+  --green-border: #bbf7d0;
+  --gray-cat: #64748b;
+  --gray-bg: #f8fafc;
+  --gray-border: #e2e8f0;
+  --mono: 'Courier New', monospace;
   --sans: 'Heebo', sans-serif;
 }
 * { box-sizing: border-box; margin: 0; }
@@ -34,91 +38,91 @@ body {
   color: var(--text);
   font-family: var(--sans);
   min-height: 100vh;
-  padding: 40px 20px 100px;
+  padding: 0 0 80px;
 }
-.wrap { max-width: 1120px; margin: 0 auto; }
 
-.header { margin-bottom: 36px; }
-.brand {
-  font-family: var(--mono);
-  font-size: 11px;
-  letter-spacing: .16em;
-  color: var(--muted);
-  text-transform: uppercase;
-  margin-bottom: 12px;
+/* Header bar */
+.top-bar {
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  padding: 20px 24px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 16px;
+}
+.logo {
+  height: 40px;
+  object-fit: contain;
+}
+.top-bar h1 {
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: -.01em;
+  color: var(--text);
+}
+.top-bar .sep {
+  width: 1px;
+  height: 28px;
+  background: var(--border);
+}
+.top-bar .sub {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--muted);
 }
 .lamp {
-  width: 8px; height: 8px; border-radius: 50%;
-  background: var(--muted);
+  width: 9px; height: 9px; border-radius: 50%;
+  background: var(--border);
+  margin-right: auto;
+  margin-left: 8px;
   transition: all .4s;
 }
-.lamp.ok { background: var(--green); box-shadow: 0 0 10px rgba(63,173,106,.5); }
-.lamp.alert { background: var(--red); box-shadow: 0 0 10px rgba(217,74,63,.5); }
-h1 { font-size: 26px; font-weight: 900; letter-spacing: -.02em; margin-bottom: 6px; }
-.tagline { color: var(--muted); font-size: 14px; line-height: 1.7; }
+.lamp.ok { background: var(--green); box-shadow: 0 0 8px rgba(22,163,74,.4); }
+.lamp.alert { background: var(--red); box-shadow: 0 0 8px rgba(220,38,38,.4); }
 
-/* Upload row — two separate boxes */
+.wrap { max-width: 1240px; margin: 0 auto; padding: 28px 24px 0; }
+
+/* Upload row */
 .upload-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 @media (max-width: 700px) { .upload-row { grid-template-columns: 1fr; } }
 .upload-box {
-  background: var(--panel);
+  background: var(--white);
   border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 24px 20px;
+  border-radius: 10px;
+  padding: 22px 20px;
   text-align: center;
 }
 .upload-box input[type=file] { display: none; }
-.ub-icon { font-size: 28px; margin-bottom: 8px; opacity: .7; }
-.ub-label { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+.ub-icon { font-size: 26px; margin-bottom: 6px; }
+.ub-label { font-size: 14px; font-weight: 700; margin-bottom: 3px; color: var(--text); }
 .ub-hint { font-size: 12px; color: var(--muted); line-height: 1.5; margin-bottom: 12px; }
 .ub-btn {
   display: inline-block;
-  font-family: var(--sans);
-  font-weight: 700;
-  font-size: 12.5px;
-  background: var(--panel2);
-  border: 1px solid var(--border);
-  color: var(--text);
-  padding: 8px 18px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: border-color .2s;
+  font-family: var(--sans); font-weight: 600; font-size: 12.5px;
+  background: var(--bg); border: 1px solid var(--border);
+  color: var(--text); padding: 7px 16px; border-radius: 6px;
+  cursor: pointer; transition: background .15s;
 }
-.ub-btn:hover { border-color: var(--accent); }
+.ub-btn:hover { background: #e8eaee; }
 .ub-file-name {
   margin-top: 10px;
-  font-family: var(--mono);
-  font-size: 11.5px;
-  color: var(--accent);
-  min-height: 20px;
+  font-family: var(--mono); font-size: 11.5px;
+  color: var(--accent); min-height: 18px;
 }
 
-/* Run button */
-.run-bar {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  margin-top: 16px;
-}
+/* Run bar */
+.run-bar { display: flex; align-items: center; gap: 14px; margin-top: 16px; }
 button {
-  font-family: var(--sans);
-  font-weight: 700;
-  font-size: 13.5px;
-  border: none;
-  border-radius: 8px;
-  padding: 10px 20px;
-  cursor: pointer;
-  transition: filter .15s, transform .08s;
+  font-family: var(--sans); font-weight: 700; font-size: 13.5px;
+  border: none; border-radius: 8px; padding: 10px 22px;
+  cursor: pointer; transition: filter .15s, transform .08s;
 }
 button:active { transform: scale(.97); }
 button:disabled { opacity: .35; cursor: not-allowed; }
-.btn-go { background: var(--accent); color: #1a1305; }
-.btn-go:hover:not(:disabled) { filter: brightness(1.1); }
-.btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--text); }
-.btn-ghost:hover { border-color: var(--muted); }
+.btn-go { background: var(--accent); color: #fff; }
+.btn-go:hover:not(:disabled) { background: var(--accent-hover); }
+.btn-ghost { background: var(--white); border: 1px solid var(--border); color: var(--text); }
+.btn-ghost:hover { background: var(--bg); }
 .status-msg { font-size: 12.5px; color: var(--muted); }
 .status-msg.err { color: var(--red); }
 
@@ -130,85 +134,90 @@ button:disabled { opacity: .35; cursor: not-allowed; }
 .ignore-bar .il-label { font-size: 11.5px; color: var(--muted); white-space: nowrap; }
 .ignore-tokens { display: flex; flex-wrap: wrap; gap: 5px; }
 .ignore-token {
-  font-family: var(--mono); font-size: 10.5px;
-  background: var(--panel2); border: 1px solid var(--border);
-  color: var(--muted); padding: 3px 8px; border-radius: 4px;
+  font-family: var(--mono); font-size: 10px;
+  background: var(--white); border: 1px solid var(--border);
+  color: var(--muted); padding: 2px 7px; border-radius: 4px;
 }
 
 /* Cards */
 .card {
-  background: var(--panel);
+  background: var(--white);
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: 10px;
   padding: 24px;
   margin-top: 18px;
 }
 .card[hidden] { display: none; }
 .card-title { font-size: 15px; font-weight: 700; margin-bottom: 14px; }
 
-/* Summary chips */
+/* Chips */
 .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
 .chip {
-  font-family: var(--mono); font-size: 11.5px; color: var(--muted);
-  background: var(--panel2); border: 1px solid var(--border);
-  padding: 6px 14px; border-radius: 20px;
+  font-size: 12px; color: var(--muted);
+  background: var(--bg); border: 1px solid var(--border);
+  padding: 5px 14px; border-radius: 20px;
 }
 .chip b { color: var(--text); }
 
-/* Three-column results */
+/* Results grid — adapts to visible columns */
 .results-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 14px;
   align-items: start;
 }
-@media (max-width: 900px) { .results-grid { grid-template-columns: 1fr; } }
+@media (max-width: 900px) { .results-grid { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 560px) { .results-grid { grid-template-columns: 1fr; } }
 
 .result-col {
-  border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 10px;
   overflow: hidden;
 }
 .col-header {
-  padding: 12px 14px;
+  padding: 11px 14px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 700;
 }
+.col-red { border: 1px solid var(--red-border); }
 .col-red .col-header { background: var(--red-bg); color: var(--red); }
+.col-amber { border: 1px solid var(--amber-border); }
 .col-amber .col-header { background: var(--amber-bg); color: var(--amber); }
-.col-gray .col-header { background: var(--gray-bg); color: var(--gray-tag); }
+.col-gray { border: 1px solid var(--gray-border); }
+.col-gray .col-header { background: var(--gray-bg); color: var(--gray-cat); }
+.col-excluded { border: 1px solid #e0dff0; }
+.col-excluded .col-header { background: #f5f4fb; color: #7c6fae; }
 .badge {
   font-family: var(--mono); font-size: 11px; font-weight: 700;
-  padding: 2px 10px; border-radius: 20px; background: rgba(0,0,0,.25);
+  padding: 2px 9px; border-radius: 20px;
+  background: rgba(0,0,0,.07);
 }
 .col-body { max-height: 420px; overflow-y: auto; }
 .id-row {
   font-family: var(--mono); font-size: 11.5px;
-  padding: 8px 12px;
+  padding: 7px 12px;
   border-bottom: 1px solid var(--border);
   direction: ltr; text-align: left;
   word-break: break-all;
   line-height: 1.5;
+  background: var(--white);
 }
 .id-row:last-child { border-bottom: none; }
-.col-red .id-row { background: rgba(217,74,63,.04); }
-.col-amber .id-row { background: rgba(224,163,50,.03); }
-.col-gray .id-row { background: rgba(107,117,133,.03); }
 .warn-line {
   font-size: 10px; color: var(--amber); font-family: var(--sans);
-  margin-top: 3px;
+  margin-top: 2px;
 }
 .empty-ok {
-  text-align: center; padding: 20px 14px;
+  text-align: center; padding: 18px 14px;
   color: var(--green); font-size: 13px;
+  background: var(--green-bg);
 }
 
 /* Ignored */
 details { margin-top: 14px; }
-summary { cursor: pointer; color: var(--muted); font-size: 12px; font-family: var(--mono); }
+summary { cursor: pointer; color: var(--muted); font-size: 12px; }
 .ignored-content {
   margin-top: 8px; font-family: var(--mono); font-size: 11px;
   color: var(--muted); direction: ltr; text-align: left; line-height: 2;
@@ -217,9 +226,8 @@ summary { cursor: pointer; color: var(--muted); font-size: 12px; font-family: va
 /* Parse info */
 .parse-info {
   margin-top: 12px; padding: 10px 14px;
-  background: var(--panel2); border: 1px solid var(--border); border-radius: 8px;
+  background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
   font-size: 12px; color: var(--muted); line-height: 1.7;
-  font-family: var(--mono);
 }
 
 /* Actions */
@@ -230,37 +238,41 @@ summary { cursor: pointer; color: var(--muted); font-size: 12px; font-family: va
 @media (max-width: 640px) { .edit-row { grid-template-columns: 1fr; } }
 .field-label { display: block; font-size: 12px; font-weight: 700; margin-bottom: 6px; }
 textarea {
-  width: 100%; background: var(--panel2); border: 1px solid var(--border);
+  width: 100%; background: var(--bg); border: 1px solid var(--border);
   color: var(--text); font-family: var(--mono); font-size: 12px;
   line-height: 1.7; padding: 12px; border-radius: 8px;
   resize: vertical; direction: ltr; text-align: left;
 }
 input[type=text] {
-  width: 100%; background: var(--panel2); border: 1px solid var(--border);
+  width: 100%; background: var(--bg); border: 1px solid var(--border);
   color: var(--text); font-family: var(--mono); font-size: 13px;
   padding: 9px 12px; border-radius: 8px;
 }
 </style>
 </head>
 <body>
-<div class="wrap">
 
-  <div class="header">
-    <div class="brand"><span class="lamp" id="lamp"></span>בקרת ארכיון · כאן חדשות</div>
-    <h1>בדיקת ליינאפ מול ארכיון</h1>
-    <p class="tagline">מעלים שני קבצי טקסט — הליינאפ ותיקיית הארכיון — ומקבלים רשימת חוסרים.</p>
+  <!-- Header -->
+  <div class="top-bar">
+    <img class="logo" src="data:image/jpeg;base64,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" alt="כאן חדשות">
+    <h1>ארכיון חטיבת החדשות</h1>
+    <div class="sep"></div>
+    <div class="sub">בדיקת ליינאפ מול ארכיון</div>
+    <span class="lamp" id="lamp"></span>
   </div>
+
+<div class="wrap">
 
   <!-- Upload -->
   <div class="upload-row">
-    <div class="upload-box" id="boxLineup">
+    <div class="upload-box">
       <div class="ub-icon">📋</div>
       <div class="ub-label">קובץ ליינאפ</div>
       <div class="ub-hint">TXT עם LINUP בשם הקובץ</div>
       <label class="ub-btn">בחירת קובץ<input type="file" id="fileLineup" accept=".txt,text/plain"></label>
       <div class="ub-file-name" id="nameLineup"></div>
     </div>
-    <div class="upload-box" id="boxArchive">
+    <div class="upload-box">
       <div class="ub-icon">🗂️</div>
       <div class="ub-label">קובץ תיקיית ארכיון</div>
       <div class="ub-hint">TXT עם שם תאריך (למשל 260825.txt)</div>
@@ -305,17 +317,19 @@ input[type=text] {
         </div>
         <div class="col-body" id="listGray"></div>
       </div>
+      <div class="result-col col-excluded">
+        <div class="col-header">
+          <span>הוחרגו — לא צריך לבדוק</span>
+          <span class="badge" id="badgeExcluded">0</span>
+        </div>
+        <div class="col-body" id="listExcluded"></div>
+      </div>
     </div>
-
-    <details>
-      <summary id="ignoredSummary">פריטים שהוחרגו — 0</summary>
-      <div class="ignored-content" id="ignoredList"></div>
-    </details>
 
     <div class="parse-info" id="parseInfo"></div>
 
     <div class="actions">
-      <button class="btn-go" id="btnExport">ייצוא לגוגל דרייב</button>
+      <button class="btn-go" id="btnExport">ייצוא לאקסל</button>
       <button class="btn-ghost" id="btnEdit">עריכה ידנית</button>
       <button class="btn-ghost" id="btnReset">בדיקה חדשה</button>
     </div>
@@ -371,7 +385,7 @@ function renderIgnoreTokens() {
 }
 renderIgnoreTokens();
 
-// --- Two separate file inputs ---
+// --- File inputs ---
 $('fileLineup').addEventListener('change', e => {
   lineupFile = e.target.files[0] || null;
   $('nameLineup').textContent = lineupFile ? lineupFile.name : '';
@@ -382,7 +396,6 @@ $('fileArchive').addEventListener('change', e => {
   $('nameArchive').textContent = archiveFile ? archiveFile.name : '';
   updateRunBtn();
 });
-
 function updateRunBtn() {
   $('btnRun').disabled = !(lineupFile && archiveFile);
 }
@@ -398,19 +411,14 @@ $('btnRun').addEventListener('click', async () => {
   $('btnRun').disabled = true;
   $('statusMsg').className = 'status-msg';
   $('statusMsg').textContent = 'קורא קבצים...';
-
   try {
     const lineupText = await lineupFile.text();
     const archiveText = await archiveFile.text();
-
     lastDate = extractDateFromFilename(archiveFile.name);
     lastLineupIds = parseLineupIds(lineupText);
     lastArchiveNames = parseArchiveNames(archiveText);
-
     $('statusMsg').textContent = 'מריץ השוואה...';
-    // Small delay so the user sees it working
     await new Promise(r => setTimeout(r, 120));
-
     runComparison(lastDate, lastLineupIds, lastArchiveNames, ignoreList);
     $('statusMsg').textContent = '';
   } catch (err) {
@@ -423,50 +431,35 @@ $('btnRun').addEventListener('click', async () => {
 
 // --- Parsing ---
 function cleanText(text) {
-  // Remove BOM, normalize line endings, trim
   return text.replace(/^\uFEFF/, '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
 }
-
 function parseLineupIds(text) {
   return cleanText(text).split('\n')
-    .map(line => line.trim())
-    .filter(Boolean)
+    .map(line => line.trim()).filter(Boolean)
     .map(line => line.replace(/^(VTR|VO|SYNC)[:_\s]*/i, '').trim())
     .filter(Boolean);
 }
-
 function parseArchiveNames(text) {
-  return cleanText(text).split('\n')
-    .map(line => line.trim())
-    .filter(Boolean);
+  return cleanText(text).split('\n').map(line => line.trim()).filter(Boolean);
 }
 
-// --- Comparison engine (double-check) ---
-function stripVersion(id) {
-  return id.replace(/[Vv]\d+$/, '');
-}
-
-function getBaseId(archiveName) {
-  const beforeDot = archiveName.split('.')[0];
-  return stripVersion(beforeDot);
-}
-
+// --- Comparison ---
+function stripVersion(id) { return id.replace(/[Vv]\d+$/, ''); }
+function getBaseId(name) { return stripVersion(name.split('.')[0]); }
 function extractDate6(id) {
-  const matches = id.match(/\d{6}/g);
-  return matches ? matches[matches.length - 1] : null;
+  const m = id.match(/\d{6}/g);
+  return m ? m[m.length - 1] : null;
 }
-
 function similarity(a, b) {
   const n = a.length, m = b.length;
-  if (n === 0 && m === 0) return 1;
-  if (n === 0 || m === 0) return 0;
+  if (!n && !m) return 1;
+  if (!n || !m) return 0;
   const dp = new Array(m + 1).fill(0);
   for (let i = 1; i <= n; i++) {
     let prev = 0;
     for (let j = 1; j <= m; j++) {
       const tmp = dp[j];
-      if (a[i-1] === b[j-1]) dp[j] = prev + 1;
-      else dp[j] = Math.max(dp[j], dp[j-1]);
+      dp[j] = a[i-1] === b[j-1] ? prev + 1 : Math.max(dp[j], dp[j-1]);
       prev = tmp;
     }
   }
@@ -474,156 +467,96 @@ function similarity(a, b) {
 }
 
 function runComparison(ddmmyy, lineupIds, archiveNames, ignore) {
-  // Build multiple lookup structures for robust matching
   const archiveBases = archiveNames.map(n => getBaseId(n));
   const archiveBasesLow = archiveBases.map(b => b.toLowerCase());
   const archiveBaseSet = new Set(archiveBasesLow);
-
-  // Also build a set of archive bases split by underscore segments for partial matching
-  // This catches cases where the archive has a slightly different form
   const archiveFullLow = archiveNames.map(n => n.toLowerCase());
 
   function isIgnored(id) {
     const low = id.toLowerCase();
     return ignore.some(tok => low.includes(tok.toLowerCase()));
   }
-
-  // Primary match: exact base-ID match (case-insensitive)
-  function exactMatch(id) {
-    const base = stripVersion(id).toLowerCase();
-    return archiveBaseSet.has(base);
-  }
-
-  // Secondary match: check if the base ID is a substring of any archive name,
-  // or if any archive base is a substring of the lineup ID (catches suffix/prefix diffs)
+  function exactMatch(id) { return archiveBaseSet.has(stripVersion(id).toLowerCase()); }
   function substringMatch(id) {
     const base = stripVersion(id).toLowerCase();
     for (const aFull of archiveFullLow) {
-      if (aFull.includes(base) || base.includes(getBaseId(aFull))) {
-        // Make sure it's a meaningful match (not just matching on a short common prefix)
-        const aBase = getBaseId(aFull);
-        if (aBase.length > 10 && (aFull.includes(base) || base.includes(aBase))) {
-          return aBase;
-        }
-      }
+      const aBase = getBaseId(aFull);
+      if (aBase.length > 10 && (aFull.includes(base) || base.includes(aBase))) return aBase;
     }
     return null;
   }
-
-  // Near-match for warnings
   function findNearMatch(id) {
     const low = stripVersion(id).toLowerCase();
-    let bestScore = 0, bestMatch = '';
+    let best = 0, match = '';
     for (const ab of archiveBasesLow) {
       const s = similarity(low, ab);
-      if (s > bestScore) { bestScore = s; bestMatch = ab; }
+      if (s > best) { best = s; match = ab; }
     }
-    if (bestScore >= 0.88 && !archiveBaseSet.has(low)) {
-      return bestMatch;
-    }
-    return null;
+    return (best >= 0.88 && !archiveBaseSet.has(low)) ? match : null;
   }
 
   const seenBases = new Set();
   const redItems = [], amberItems = [], grayItems = [], ignoredItems = [];
-  let totalAfterFilter = 0;
-  let substringMatches = 0;
+  let totalAfterFilter = 0, substringMatches = 0;
 
   for (const id of lineupIds) {
     if (isIgnored(id)) { ignoredItems.push(id); continue; }
-
     const base = stripVersion(id).toLowerCase();
     if (seenBases.has(base)) continue;
     seenBases.add(base);
     totalAfterFilter++;
-
-    // Pass 1: exact
     if (exactMatch(id)) continue;
-
-    // Pass 2: substring (catches partial mismatches in naming)
-    const subMatch = substringMatch(id);
-    if (subMatch) { substringMatches++; continue; }
-
-    // Not found — classify
+    if (substringMatch(id)) { substringMatches++; continue; }
     const displayId = stripVersion(id);
     const d = extractDate6(id);
-
-    if (!d) {
-      grayItems.push({ id: displayId, warn: '' });
-    } else if (ddmmyy && d === ddmmyy) {
-      const nearMatch = findNearMatch(id);
-      const warn = nearMatch ? `⚠ ID דומה בתיקייה: ${nearMatch}` : '';
-      redItems.push({ id: displayId, warn });
+    if (!d) { grayItems.push({ id: displayId, warn: '' }); }
+    else if (ddmmyy && d === ddmmyy) {
+      const nm = findNearMatch(id);
+      redItems.push({ id: displayId, warn: nm ? `⚠ ID דומה בתיקייה: ${nm}` : '' });
     } else {
       amberItems.push({ id: displayId, warn: '' });
     }
   }
 
-  renderResults({
-    ddmmyy,
-    totalAfterFilter,
-    redItems,
-    amberItems,
-    grayItems,
-    ignoredItems,
-    lineupCount: lineupIds.length,
-    archiveCount: archiveNames.length,
-    substringMatches
-  });
+  renderResults({ ddmmyy, totalAfterFilter, redItems, amberItems, grayItems, ignoredItems,
+    lineupCount: lineupIds.length, archiveCount: archiveNames.length, substringMatches });
 }
 
 // --- Render ---
+let lastResults = null;
 function renderResults({ ddmmyy, totalAfterFilter, redItems, amberItems, grayItems, ignoredItems, lineupCount, archiveCount, substringMatches }) {
   lastResults = { ddmmyy, totalAfterFilter, redItems, amberItems, grayItems, ignoredItems };
   $('resultsCard').hidden = false;
   $('editCard').hidden = true;
-
-  const dateDisplay = ddmmyy
-    ? `${ddmmyy.slice(0,2)}/${ddmmyy.slice(2,4)}/${ddmmyy.slice(4)}`
-    : 'לא זוהה';
-
+  const dateDisplay = ddmmyy ? `${ddmmyy.slice(0,2)}/${ddmmyy.slice(2,4)}/${ddmmyy.slice(4)}` : 'לא זוהה';
   $('lamp').className = 'lamp ' + (redItems.length > 0 ? 'alert' : 'ok');
-
   $('chips').innerHTML =
     `<span class="chip">תאריך: <b>${dateDisplay}</b></span>` +
     `<span class="chip">פריטים לאחר סינון: <b>${totalAfterFilter}</b></span>` +
     `<span class="chip">חוסרים: <b style="color:var(--red)">${redItems.length}</b></span>`;
-
   $('badgeRed').textContent = redItems.length;
   $('badgeAmber').textContent = amberItems.length;
   $('badgeGray').textContent = grayItems.length;
-
-  // Hide gray column if empty
+  $('badgeExcluded').textContent = ignoredItems.length;
   $('grayCol').style.display = grayItems.length === 0 ? 'none' : '';
-  // Adjust grid when gray is hidden
-  const grid = document.querySelector('.results-grid');
-  grid.style.gridTemplateColumns = grayItems.length === 0 ? '1fr 1fr' : '1fr 1fr 1fr';
 
   function renderCol(items) {
     if (!items.length) return '<div class="empty-ok">אין ✓</div>';
     return items.map(it =>
-      `<div class="id-row">${it.id}${it.warn ? `<div class="warn-line">${it.warn}</div>` : ''}</div>`
+      `<div class="id-row">${typeof it === 'string' ? it : it.id}${(it.warn) ? `<div class="warn-line">${it.warn}</div>` : ''}</div>`
     ).join('');
   }
-
   $('listRed').innerHTML = renderCol(redItems);
   $('listAmber').innerHTML = renderCol(amberItems);
   $('listGray').innerHTML = renderCol(grayItems);
-
-  $('ignoredSummary').textContent = `פריטים שהוחרגו — ${ignoredItems.length}`;
-  $('ignoredList').textContent = ignoredItems.join('\n');
-
-  // Parse info
+  $('listExcluded').innerHTML = renderCol(ignoredItems);
   let info = `נקראו ${lineupCount} שורות מהליינאפ, ${archiveCount} שורות מהתיקייה`;
-  if (substringMatches > 0) {
-    info += ` · ${substringMatches} התאמות נמצאו בבדיקה משנית (substring)`;
-  }
+  if (substringMatches > 0) info += ` · ${substringMatches} התאמות בבדיקה משנית`;
   $('parseInfo').textContent = info;
-
   $('resultsCard').scrollIntoView({ behavior: 'smooth' });
 }
 
-// --- Edit panel ---
+// --- Edit ---
 $('btnEdit').addEventListener('click', () => {
   $('editDate').value = lastDate;
   $('editLineup').value = lastLineupIds.join('\n');
@@ -633,12 +566,10 @@ $('btnEdit').addEventListener('click', () => {
   $('editCard').hidden = false;
   $('editCard').scrollIntoView({ behavior: 'smooth' });
 });
-
 $('btnCancelEdit').addEventListener('click', () => {
   $('editCard').hidden = true;
   $('resultsCard').hidden = false;
 });
-
 $('btnRunManual').addEventListener('click', () => {
   lastDate = $('editDate').value.trim();
   lastLineupIds = $('editLineup').value.split('\n').map(s => s.trim()).filter(Boolean);
@@ -647,123 +578,40 @@ $('btnRunManual').addEventListener('click', () => {
   renderIgnoreTokens();
   runComparison(lastDate, lastLineupIds, lastArchiveNames, ignoreList);
 });
-
 $('btnReset').addEventListener('click', () => location.reload());
 
-// --- Google Drive export via Anthropic API + Drive MCP ---
-let lastResults = null;
-
-$('btnExport').addEventListener('click', exportToDrive);
-
-async function exportToDrive() {
+// --- Excel export ---
+$('btnExport').addEventListener('click', () => {
   if (!lastResults) return;
-  const btn = $('btnExport');
-  btn.textContent = 'מעלה לגוגל דרייב...';
-  btn.disabled = true;
-
-  try {
-    const { ddmmyy, totalAfterFilter, redItems, amberItems, grayItems, ignoredItems } = lastResults;
-    const dateDisplay = ddmmyy
-      ? `${ddmmyy.slice(0,2)}/${ddmmyy.slice(2,4)}/${ddmmyy.slice(4)}`
-      : '';
-
-    // Build TSV content (tab-separated — no comma conflicts with Hebrew)
-    const lines = [];
-    lines.push('קטגוריה\tID\tהערה');
-    for (const it of redItems)
-      lines.push(`חסר בתיקייה (תאריך תואם)\t${it.id}\t${it.warn || ''}`);
-    for (const it of amberItems)
-      lines.push(`חסר, תאריך אחר (אמור להיות מאורכב)\t${it.id}\t${it.warn || ''}`);
-    for (const it of grayItems)
-      lines.push(`לא ניתן לקבוע תאריך\t${it.id}\t${it.warn || ''}`);
-    if (!redItems.length && !amberItems.length && !grayItems.length)
-      lines.push('אין חוסרים\t\t');
-    const tsv = lines.join('\n');
-
-    const title = `בדיקת ליינאפ ${dateDisplay || ddmmyy || ''}`.trim();
-
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-6",
-        max_tokens: 1000,
-        system: `You are a file-upload assistant. Your ONLY job: call the Google Drive create_file tool with the EXACT parameters given to you. Do not modify them. Do not ask questions. Just call the tool immediately.`,
-        messages: [{
-          role: "user",
-          content: `Call create_file with these exact parameters:
-- title: "${title}"
-- textContent: the TSV below (copy it exactly, preserving tabs and newlines)
-- contentMimeType: "text/tab-separated-values"
-
-TSV content:
-${tsv}`
-        }],
-        mcp_servers: [{
-          type: "url",
-          url: "https://drivemcp.googleapis.com/mcp/v1",
-          name: "google-drive"
-        }]
-      })
-    });
-
-    const data = await response.json();
-
-    // Extract file link from MCP tool result
-    let fileUrl = null;
-    let fileName = null;
-    if (data.content) {
-      for (const block of data.content) {
-        const text = block.text || (block.content && block.content[0] && block.content[0].text) || '';
-        if (typeof text === 'string') {
-          // Look for file ID or URL in the response
-          const urlMatch = text.match(/https:\/\/docs\.google\.com\/spreadsheets\/d\/[^\s"']+/);
-          if (urlMatch) fileUrl = urlMatch[0];
-          const idMatch = text.match(/"id"\s*:\s*"([^"]+)"/);
-          if (!fileUrl && idMatch) {
-            fileUrl = `https://docs.google.com/spreadsheets/d/${idMatch[1]}/edit`;
-          }
-          // Try parsing as JSON
-          try {
-            const parsed = JSON.parse(text);
-            if (parsed.id) fileUrl = `https://docs.google.com/spreadsheets/d/${parsed.id}/edit`;
-            if (parsed.name) fileName = parsed.name;
-          } catch(e) {}
-        }
-      }
-    }
-
-    if (fileUrl) {
-      btn.textContent = '✓ הועלה בהצלחה';
-      btn.style.background = 'var(--green)';
-      // Show link
-      const link = document.createElement('a');
-      link.href = fileUrl;
-      link.target = '_blank';
-      link.textContent = 'פתיחה בגוגל שיטס ←';
-      link.style.cssText = 'color:var(--accent);font-size:13px;font-weight:700;margin-right:14px;text-decoration:underline;';
-      btn.parentElement.insertBefore(link, btn.nextSibling);
-    } else {
-      // Fallback: show raw response for debugging
-      console.log('Drive API response:', JSON.stringify(data, null, 2));
-      btn.textContent = 'ייתכן שהועלה — בדקו בדרייב';
-      btn.style.background = 'var(--amber)';
-    }
-
-  } catch (err) {
-    console.error('Export error:', err);
-    btn.textContent = 'שגיאה בייצוא';
-    btn.style.background = 'var(--red)';
-    btn.style.color = '#fff';
+  const { ddmmyy, totalAfterFilter, redItems, amberItems, grayItems, ignoredItems } = lastResults;
+  const dateDisplay = ddmmyy ? `${ddmmyy.slice(0,2)}/${ddmmyy.slice(2,4)}/${ddmmyy.slice(4)}` : 'לא זוהה';
+  const wb = XLSX.utils.book_new();
+  const rows = [];
+  rows.push(['בדיקת ליינאפ מול ארכיון — כאן חדשות', '', '']);
+  rows.push([`תאריך נבדק: ${dateDisplay}    |    סה"כ פריטים אחרי סינון: ${totalAfterFilter}`, '', '']);
+  rows.push(['', '', '']);
+  rows.push(['קטגוריה', 'ID', 'הערה']);
+  function addBlock(items, label) {
+    if (!items.length) { rows.push([label, '(אין)', '']); return; }
+    for (const it of items) rows.push([label, it.id, it.warn || '']);
   }
-
-  setTimeout(() => {
-    btn.textContent = 'ייצוא לגוגל דרייב';
-    btn.style.background = '';
-    btn.style.color = '';
-    btn.disabled = false;
-  }, 10000);
-}
+  addBlock(redItems, 'חסר בתיקייה (תאריך תואם)');
+  addBlock(amberItems, 'חסר, תאריך אחר (אמור להיות מאורכב)');
+  addBlock(grayItems, 'לא ניתן לקבוע תאריך');
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols'] = [{ wch: 32 }, { wch: 44 }, { wch: 34 }];
+  ws['!merges'] = [
+    { s: { r: 0, c: 0 }, e: { r: 0, c: 2 } },
+    { s: { r: 1, c: 0 }, e: { r: 1, c: 2 } },
+  ];
+  XLSX.utils.book_append_sheet(wb, ws, 'בדיקת ליינאפ');
+  const igRows = [['ID שהוחרג (רשימת התעלמות)']];
+  for (const id of ignoredItems) igRows.push([id]);
+  const ws2 = XLSX.utils.aoa_to_sheet(igRows);
+  ws2['!cols'] = [{ wch: 42 }];
+  XLSX.utils.book_append_sheet(wb, ws2, 'הוחרגו');
+  XLSX.writeFile(wb, `archive_check_${ddmmyy || 'report'}.xlsx`);
+});
 </script>
 </body>
 </html>
