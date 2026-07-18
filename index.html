@@ -205,6 +205,18 @@ button:disabled { opacity: .35; cursor: not-allowed; }
   background: var(--white);
 }
 .id-row:last-child { border-bottom: none; }
+.id-row-inner {
+  display: flex; justify-content: space-between; align-items: center; gap: 6px;
+}
+.copy-btn {
+  flex-shrink: 0;
+  background: none; border: none; padding: 2px 4px;
+  cursor: pointer; font-size: 13px; opacity: .35;
+  transition: opacity .15s;
+  line-height: 1;
+}
+.copy-btn:hover { opacity: .7; }
+.copy-btn.copied { opacity: 1; }
 .warn-line {
   font-size: 10px; color: var(--amber); font-family: var(--sans);
   margin-top: 2px;
@@ -540,16 +552,24 @@ function renderResults({ ddmmyy, totalAfterFilter, redItems, amberItems, grayIte
   $('badgeExcluded').textContent = ignoredItems.length;
   $('grayCol').style.display = grayItems.length === 0 ? 'none' : '';
 
-  function renderCol(items) {
+  function renderCol(items, copyable) {
     if (!items.length) return '<div class="empty-ok">אין ✓</div>';
-    return items.map(it =>
-      `<div class="id-row">${typeof it === 'string' ? it : it.id}${(it.warn) ? `<div class="warn-line">${it.warn}</div>` : ''}</div>`
-    ).join('');
+    return items.map(it => {
+      const id = typeof it === 'string' ? it : it.id;
+      const warn = it.warn ? `<div class="warn-line">${it.warn}</div>` : '';
+      const copyBtn = copyable
+        ? `<button class="copy-btn" onclick="copyId(this,'${id.replace(/'/g,"\\'")}')">📋</button>`
+        : '';
+      const inner = copyable
+        ? `<div class="id-row-inner"><span>${id}</span>${copyBtn}</div>${warn}`
+        : `${id}${warn}`;
+      return `<div class="id-row">${inner}</div>`;
+    }).join('');
   }
-  $('listRed').innerHTML = renderCol(redItems);
-  $('listAmber').innerHTML = renderCol(amberItems);
-  $('listGray').innerHTML = renderCol(grayItems);
-  $('listExcluded').innerHTML = renderCol(ignoredItems);
+  $('listRed').innerHTML = renderCol(redItems, true);
+  $('listAmber').innerHTML = renderCol(amberItems, true);
+  $('listGray').innerHTML = renderCol(grayItems, false);
+  $('listExcluded').innerHTML = renderCol(ignoredItems, false);
   let info = `נקראו ${lineupCount} שורות מהליינאפ, ${archiveCount} שורות מהתיקייה`;
   if (substringMatches > 0) info += ` · ${substringMatches} התאמות בבדיקה משנית`;
   $('parseInfo').textContent = info;
@@ -612,6 +632,14 @@ $('btnExport').addEventListener('click', () => {
   XLSX.utils.book_append_sheet(wb, ws2, 'הוחרגו');
   XLSX.writeFile(wb, `archive_check_${ddmmyy || 'report'}.xlsx`);
 });
+
+// --- Copy ID ---
+function copyId(btn, id) {
+  navigator.clipboard.writeText(id).then(() => {
+    btn.textContent = '✓';
+    btn.classList.add('copied');
+  });
+}
 </script>
 </body>
 </html>
